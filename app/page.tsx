@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { CATEGORIES, INITIAL_LISTINGS, BANGLADESH_LOCATIONS, SupplyListing } from '@/lib/mockData';
 import ListingCard from '@/components/ListingCard';
 import ContactModal from '@/components/ContactModal';
-import { Search, MapPin, Filter, ArrowRight, ShieldCheck, PhoneCall, TrendingUp, Sparkles } from 'lucide-react';
+import { Search, MapPin, Filter, ArrowRight, ShieldCheck, PhoneCall, TrendingUp, Sparkles, Zap, Globe, Users, BarChart3, CheckCircle2, Handshake, DollarSign, Compass } from 'lucide-react';
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -58,6 +58,44 @@ export default function HomePage() {
               বাংলাদেশ জুড়ে কৃষকের তাজা পণ্য সরবরাহ খুঁজুন। আলু, ডিম, মাছ, ধান ও গবাদিপশুর সরাসরি পাইকারি রিয়েল-টাইম তথ্য।
             </p>
 
+            {/* DUAL CTA BUTTONS */}
+            <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <Link
+                href="/post-supply"
+                className="flex items-center justify-center gap-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-2xl text-base shadow-lg shadow-amber-500/30 transition-all hover:shadow-amber-500/50 hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <span className="text-xl">🧑‍🌾</span>
+                <span>Post Produce</span>
+              </Link>
+              <Link
+                href="/browse"
+                className="flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border-2 border-white/30 hover:border-white/50 text-white font-bold py-4 px-8 rounded-2xl text-base backdrop-blur transition-all hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <span className="text-xl">🏪</span>
+                <span>Browse Supply</span>
+              </Link>
+            </div>
+
+            {/* TRUST INDICATORS */}
+            <div className="pt-6 flex flex-wrap gap-3">
+              <div className="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full backdrop-blur">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Verified Farmers</span>
+              </div>
+              <div className="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full backdrop-blur">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Verified Dealers</span>
+              </div>
+              <div className="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full backdrop-blur">
+                <PhoneCall className="w-4 h-4" />
+                <span>Direct Contact</span>
+              </div>
+              <div className="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full backdrop-blur">
+                <MapPin className="w-4 h-4" />
+                <span>Location-Based Search</span>
+              </div>
+            </div>
+
             {/* HERO SEARCH BAR */}
             <div className="bg-white p-2 sm:p-3 rounded-2xl shadow-2xl border border-slate-200 text-slate-900 mt-8">
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
@@ -104,22 +142,42 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-brand-400" />
-                <span>Verified Farmers & Aggregators</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <PhoneCall className="w-4 h-4 text-brand-400" />
-                <span>Direct Voice Call (No Middleman)</span>
-              </div>
-              <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
-                <TrendingUp className="w-4 h-4 text-brand-400" />
-                <span>Real-Time Wholesale Price Index</span>
-              </div>
-            </div>
+          </div>
+        </div>
+      </section>
 
+      {/* MARKETPLACE ACTIVITY STATS BANNER */}
+      <section className="bg-slate-900 border-y border-slate-800 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            <div className="text-center space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <BarChart3 className="w-5 h-5 text-brand-400" />
+                <span className="text-2xl sm:text-3xl font-black text-white">12,500+</span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium">Active Listings</p>
+            </div>
+            <div className="text-center space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <Globe className="w-5 h-5 text-brand-400" />
+                <span className="text-2xl sm:text-3xl font-black text-white">64</span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium">Districts Covered</p>
+            </div>
+            <div className="text-center space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <Users className="w-5 h-5 text-amber-400" />
+                <span className="text-2xl sm:text-3xl font-black text-white">1,200+</span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium">Farmers & Producers</p>
+            </div>
+            <div className="text-center space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <Handshake className="w-5 h-5 text-amber-400" />
+                <span className="text-2xl sm:text-3xl font-black text-white">300+</span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium">Dealers & Wholesalers</p>
+            </div>
           </div>
         </div>
       </section>
@@ -225,46 +283,56 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* WHY AAROTH SUPPLY INDEX SECTION */}
+      {/* WHY AAROTH SECTION */}
       <section className="bg-white border-t border-slate-200 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
             <h2 className="text-2xl font-black text-slate-900">
-              Why Aaroth is Built as a Supply Index
+              Why Aaroth?
             </h2>
-            <p className="text-slate-600 text-xs sm:text-sm">
-              We do not take commissions, lock payments in checkout, or force complex software on rural producers. Aaroth provides pure discovery and price transparency.
+            <p className="text-slate-600 text-sm">
+              The fastest way to discover, connect, and source agricultural produce across Bangladesh.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-lg">
-                1
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center mx-auto">
+                <Zap className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Direct Dealer Access</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Dealers discover available crop inventory directly from district farms (Bogra, Gazipur, Shatkhira) without navigating multi-layered local middlemen.
+              <h3 className="text-base font-bold text-slate-900">Find Supply Faster</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Search by crop, district, quantity, and price. No more phone calls to 10 middlemen.
               </p>
             </div>
 
-            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-lg">
-                2
+            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                <PhoneCall className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Instant Live Publishing</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Farmers post crop yield details with photos in under 2 minutes. Listings go live instantly to ensure real-time trade speed.
+              <h3 className="text-base font-bold text-slate-900">Connect Directly</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Call verified farmers and producers directly. No middlemen, no commissions.
               </p>
             </div>
 
-            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg">
-                3
+            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+                <DollarSign className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Direct Voice Settlement</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Dealers tap to reveal verified phone numbers and negotiate transport, payment, and delivery offline via direct mobile call.
+              <h3 className="text-base font-bold text-slate-900">Reduce Sourcing Costs</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Transparent pricing eliminates guesswork. Compare rates across districts instantly.
+              </p>
+            </div>
+
+            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 text-center hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mx-auto">
+                <Compass className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">Discover Opportunities</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Explore agricultural supply from 64 districts. Find new sources you never knew existed.
               </p>
             </div>
           </div>

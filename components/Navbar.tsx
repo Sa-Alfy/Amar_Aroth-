@@ -57,10 +57,10 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <Link
               href="/post-supply"
-              className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl font-medium text-sm shadow-sm shadow-brand-600/30 transition-all hover:shadow-brand-600/50 hover:-translate-y-0.5 active:translate-y-0"
+              className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-amber-500/30 transition-all hover:shadow-amber-500/50 hover:-translate-y-0.5 active:translate-y-0"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Post Supply</span>
+              <span>+ Post Listing</span>
             </Link>
 
             {/* Mobile Menu Button */}

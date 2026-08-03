@@ -61,8 +61,9 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
           <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1.5">
             <span className="font-medium text-slate-700">{listing.sellerName}</span>
             {listing.isSellerVerified && (
-              <span title="Verified Producer">
-                <CheckCircle2 className="w-4 h-4 text-brand-600 fill-brand-50" />
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                <CheckCircle2 className="w-3 h-3" />
+                Verified
               </span>
             )}
             <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded capitalize ml-auto">
@@ -74,20 +75,26 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
           <h3 className="font-bold text-slate-900 text-base leading-snug line-clamp-2 group-hover:text-brand-700 transition-colors">
             {listing.title}
           </h3>
+
+          {/* Location Badge */}
+          <div className="mt-2 inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200">
+            <MapPin className="w-3.5 h-3.5" />
+            <span>📍 {listing.districtNameEn} • {listing.districtNameBn}</span>
+          </div>
         </div>
 
         {/* Pricing & Quantity Box */}
-        <div className="bg-brand-50/60 p-3 rounded-xl border border-brand-100 flex items-center justify-between">
+        <div className="bg-brand-50/60 p-4 rounded-xl border border-brand-100 flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-500 block uppercase font-medium">Quantity (পরিমাণ)</span>
-            <span className="text-sm font-extrabold text-slate-900">
+            <span className="text-[10px] text-slate-500 block uppercase font-medium tracking-wide">পরিমাণ (Quantity)</span>
+            <span className="text-lg font-black text-slate-900">
               {listing.quantity.toLocaleString()} {listing.unitSymbolBn}
             </span>
           </div>
           
           <div className="text-right">
-            <span className="text-[10px] text-slate-500 block uppercase font-medium">Expected Price (দর)</span>
-            <span className="text-base font-black text-brand-700">
+            <span className="text-[10px] text-slate-500 block uppercase font-medium tracking-wide">দর (Price)</span>
+            <span className="text-xl font-black text-brand-700">
               ৳{listing.expectedPricePerUnit.toLocaleString()}
               <span className="text-xs font-normal text-slate-600"> /{listing.unitSymbolBn}</span>
             </span>
