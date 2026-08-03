@@ -29,7 +29,10 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+    <div
+      onClick={() => (onViewClick || onContactClick)(listing)}
+      className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
+    >
       
       {/* Image & Overlay Badges */}
       <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
@@ -122,7 +125,10 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
 
         {/* Action Button */}
         <button
-          onClick={() => onContactClick(listing)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onContactClick(listing);
+          }}
           className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm py-2.5 px-4 rounded-xl shadow-sm transition-colors mt-2"
         >
           <Phone className="w-4 h-4" />
