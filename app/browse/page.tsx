@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { CATEGORIES, MEASUREMENT_UNITS, BANGLADESH_LOCATIONS, INITIAL_LISTINGS, SupplyListing, ListingStatus } from '@/lib/mockData';
+import { getSupplyListings } from '@/lib/api/listings';
 import ListingCard from '@/components/ListingCard';
 import ContactModal from '@/components/ContactModal';
 import { Search, Filter, RefreshCw, SlidersHorizontal, MapPin, Tag, Package, Check, X } from 'lucide-react';
@@ -15,8 +16,18 @@ export default function BrowsePage() {
   const [selectedStatus, setSelectedStatus] = useState<ListingStatus | 'all'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'price_low' | 'price_high' | 'quantity_high'>('newest');
   
+  const [listings, setListings] = useState<SupplyListing[]>(INITIAL_LISTINGS);
   const [activeContactListing, setActiveContactListing] = useState<SupplyListing | null>(null);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Fetch from Supabase / Mock API
+  useEffect(() => {
+    getSupplyListings({
+      categoryId: selectedCategory,
+      districtId: selectedDistrict,
+      searchQuery: searchQuery,
+    }).then((data) => setListings(data));
+  }, [selectedCategory, selectedDistrict, searchQuery]);
 
   // Available districts based on selected division
   const availableDistricts = useMemo(() => {
@@ -35,7 +46,7 @@ export default function BrowsePage() {
 
   // Filter & Sort Logic
   const filteredListings = useMemo(() => {
-    let result = [...INITIAL_LISTINGS];
+    let result = [...listings];
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();

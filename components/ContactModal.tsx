@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SupplyListing } from '@/lib/mockData';
+import { recordPhoneRevealEvent } from '@/lib/api/listings';
 import { X, PhoneCall, CheckCircle2, MapPin, Package, Tag, ShieldCheck } from 'lucide-react';
 
 interface ContactModalProps {
@@ -10,6 +11,12 @@ interface ContactModalProps {
 }
 
 export default function ContactModal({ listing, onClose }: ContactModalProps) {
+  useEffect(() => {
+    if (listing?.id) {
+      recordPhoneRevealEvent(listing.id);
+    }
+  }, [listing?.id]);
+
   if (!listing) return null;
 
   return (
