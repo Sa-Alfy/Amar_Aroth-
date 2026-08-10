@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
-import { INITIAL_LISTINGS, SupplyListing } from '@/lib/mockData';
+import { INITIAL_LISTINGS, CATEGORIES, MEASUREMENT_UNITS, BANGLADESH_LOCATIONS, SupplyListing, Category, MeasurementUnit, LocationDivision } from '@/lib/mockData';
 
 // Helper to check if Supabase environment variables are configured
 export function isSupabaseConfigured(): boolean {
@@ -10,14 +10,95 @@ export function isSupabaseConfigured(): boolean {
   );
 }
 
-// Fetch active supply listings (from Supabase or Mock fallback)
+// ─── CATEGORIES ───────────────────────────────────────────────────────────────
+
+export async function getCategories(): Promise<Category[]> {
+  if (!isSupabaseConfigured()) return CATEGORIES;
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id, name_en, name_bn, slug, icon')
+      .order('sort_order', { ascending: true });
+    if (error || !data) return CATEGORIES;
+    return data.map((row: any): Category => ({
+      id: row.id,
+      nameEn: row.name_en,
+      nameBn: row.name_bn,
+      slug: row.slug,
+      icon: row.icon,
+    }));
+  } catch {
+    return CATEGORIES;
+  }
+}
+
+// ─── MEASUREMENT UNITS ────────────────────────────────────────────────────────
+
+export async function getMeasurementUnits(): Promise<MeasurementUnit[]> {
+  if (!isSupabaseConfigured()) return MEASUREMENT_UNITS;
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('measurement_units')
+      .select('id, name_en, name_bn, symbol_en, symbol_bn')
+      .order('id', { ascending: true });
+    if (error || !data) return MEASUREMENT_UNITS;
+    return data.map((row: any): MeasurementUnit => ({
+      id: row.id,
+      nameEn: row.name_en,
+      nameBn: row.name_bn,
+      symbol: row.symbol_en,
+    }));
+  } catch {
+    return MEASUREMENT_UNITS;
+  }
+}
+
+// ─── LOCATIONS ────────────────────────────────────────────────────────────────
+
+export async function getLocations(): Promise<LocationDivision[]> {
+  if (!isSupabaseConfigured()) return BANGLADESH_LOCATIONS;
+  try {
+    const supabase = createClient();
+    const [divRes, distRes, upRes] = await Promise.all([
+      supabase.from('divisions').select('id, name_en, name_bn').order('id'),
+      supabase.from('districts').select('id, division_id, name_en, name_bn').order('id'),
+      supabase.from('upazilas').select('id, district_id, name_en, name_bn').order('id'),
+    ]);
+    if (divRes.error || !divRes.data) return BANGLADESH_LOCATIONS;
+    return divRes.data.map((div: any): LocationDivision => ({
+      id: div.id,
+      nameEn: div.name_en,
+      nameBn: div.name_bn,
+      districts: (distRes.data || [])
+        .filter((d: any) => d.division_id === div.id)
+        .map((dist: any) => ({
+          id: dist.id,
+          nameEn: dist.name_en,
+          nameBn: dist.name_bn,
+          upazilas: (upRes.data || [])
+            .filter((u: any) => u.district_id === dist.id)
+            .map((up: any) => ({
+              id: up.id,
+              nameEn: up.name_en,
+              nameBn: up.name_bn,
+            })),
+        })),
+    }));
+  } catch {
+    return BANGLADESH_LOCATIONS;
+  }
+}
+
+// ─── FETCH LISTINGS ───────────────────────────────────────────────────────────
+
 export async function getSupplyListings(filters?: {
   categoryId?: number | null;
   districtId?: number | null;
   searchQuery?: string;
 }): Promise<SupplyListing[]> {
   if (!isSupabaseConfigured()) {
-    // Return filtered mock data
     return INITIAL_LISTINGS.filter((item) => {
       if (filters?.categoryId && item.categoryId !== filters.categoryId) return false;
       if (filters?.districtId && item.districtId !== filters.districtId) return false;
@@ -65,7 +146,6 @@ export async function getSupplyListings(filters?: {
       return INITIAL_LISTINGS;
     }
 
-    // Map database records to SupplyListing structure
     return data.map((row: any): SupplyListing => ({
       id: row.id,
       createdByUserId: row.created_by_user_id || row.seller_id,
@@ -93,7 +173,7 @@ export async function getSupplyListings(filters?: {
       sellerPhone: row.profiles?.phone || '01700000000',
       sellerType: (row.profiles?.user_type as any) || 'farmer',
       isSellerVerified: Boolean(row.profiles?.is_verified),
-      images: row.listing_images?.length > 0 
+      images: row.listing_images?.length > 0
         ? row.listing_images.sort((a: any, b: any) => a.sort_order - b.sort_order).map((i: any) => i.image_url)
         : ['https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&w=800&q=80'],
       status: row.status,
@@ -108,7 +188,88 @@ export async function getSupplyListings(filters?: {
   }
 }
 
-// Log phone reveal event to unified listing_events ledger
+// ─── CREATE LISTING ───────────────────────────────────────────────────────────
+
+export interface CreateListingPayload {
+  sellerId: string;
+  createdByUserId: string;
+  categoryId: number;
+  title: string;
+  description: string;
+  quantity: number;
+  unitId: number;
+  expectedPrice: number;
+  divisionId: number;
+  districtId: number;
+  upazilaId: number;
+  specificLocation?: string;
+  imageUrls?: string[];
+}
+
+export async function createSupplyListing(
+  payload: CreateListingPayload
+): Promise<{ success: boolean; listingId?: string; error?: string }> {
+  if (!isSupabaseConfigured()) {
+    return { success: false, error: 'Supabase not configured' };
+  }
+  try {
+    const supabase = createClient();
+
+    const { data: listingData, error: listingError } = await supabase
+      .from('listings')
+      .insert({
+        seller_id: payload.sellerId,
+        created_by_user_id: payload.createdByUserId,
+        category_id: payload.categoryId,
+        title: payload.title,
+        description: payload.description || null,
+        quantity: payload.quantity,
+        unit_id: payload.unitId,
+        expected_price: payload.expectedPrice,
+        division_id: payload.divisionId,
+        district_id: payload.districtId,
+        upazila_id: payload.upazilaId,
+        specific_location: payload.specificLocation || null,
+        status: 'active',
+      })
+      .select('id')
+      .single();
+
+    if (listingError || !listingData) {
+      return { success: false, error: listingError?.message || 'Failed to create listing' };
+    }
+
+    const listingId = listingData.id;
+
+    if (payload.imageUrls && payload.imageUrls.length > 0) {
+      const imageRows = payload.imageUrls
+        .filter((url) => url.trim().length > 0)
+        .map((url, index) => ({
+          listing_id: listingId,
+          image_url: url,
+          sort_order: index + 1,
+        }));
+      if (imageRows.length > 0) {
+        await supabase.from('listing_images').insert(imageRows);
+      }
+    }
+
+    await supabase.from('listing_events').insert({
+      listing_id: listingId,
+      event_type: 'created',
+      user_id: payload.createdByUserId,
+      metadata: { timestamp: new Date().toISOString() },
+    });
+
+    return { success: true, listingId };
+  } catch (err: any) {
+    console.error('Error creating supply listing:', err);
+    return { success: false, error: err?.message || 'Unexpected error' };
+  }
+}
+
+// ─── LOG PHONE REVEAL ─────────────────────────────────────────────────────────
+
 export async function recordPhoneRevealEvent(listingId: string | number): Promise<void> {
   if (!isSupabaseConfigured()) {
     console.log('[Demo Mode] Phone reveal logged for listing:', listingId);

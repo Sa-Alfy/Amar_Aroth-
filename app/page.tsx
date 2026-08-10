@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { CATEGORIES, INITIAL_LISTINGS, BANGLADESH_LOCATIONS, SupplyListing } from '@/lib/mockData';
+import { CATEGORIES, BANGLADESH_LOCATIONS, SupplyListing, Category } from '@/lib/mockData';
+import { getSupplyListings, getCategories } from '@/lib/api/listings';
 import ListingCard from '@/components/ListingCard';
 import ContactModal from '@/components/ContactModal';
 import { Search, MapPin, Filter, ArrowRight, ShieldCheck, PhoneCall, TrendingUp, Sparkles, Zap, Globe, Users, BarChart3, CheckCircle2, Handshake, DollarSign, Compass } from 'lucide-react';
@@ -12,20 +13,28 @@ export default function HomePage() {
   const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeContactListing, setActiveContactListing] = useState<SupplyListing | null>(null);
+  const [listings, setListings] = useState<SupplyListing[]>([]);
+  const [categories, setCategories] = useState<Category[]>(CATEGORIES);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Filter listings for the live directory stream
-  const filteredListings = INITIAL_LISTINGS.filter((item) => {
-    if (selectedCategory && item.categoryId !== selectedCategory) return false;
-    if (selectedDistrict && item.districtId !== selectedDistrict) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matchTitle = item.title.toLowerCase().includes(q);
-      const matchLoc = item.districtNameEn.toLowerCase().includes(q) || item.districtNameBn.includes(q);
-      const matchCat = item.categoryNameEn.toLowerCase().includes(q) || item.categoryNameBn.includes(q);
-      if (!matchTitle && !matchLoc && !matchCat) return false;
-    }
-    return true;
-  });
+  // Load categories dynamically from Supabase
+  useEffect(() => {
+    getCategories().then(setCategories);
+  }, []);
+
+  // Fetch listings dynamically when filters change
+  useEffect(() => {
+    setIsLoading(true);
+    getSupplyListings({
+      categoryId: selectedCategory,
+      districtId: selectedDistrict,
+      searchQuery,
+    })
+      .then(setListings)
+      .finally(() => setIsLoading(false));
+  }, [selectedCategory, selectedDistrict, searchQuery]);
+
+  const filteredListings = listings;
 
   return (
     <div className="min-h-screen">
@@ -43,19 +52,19 @@ export default function HomePage() {
             {/* Top Pill */}
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-brand-300 text-xs font-semibold px-3.5 py-1.5 rounded-full backdrop-blur">
               <Sparkles className="w-4 h-4 text-brand-400" />
-              <span>Digital Agricultural Supply Index Bangladesh</span>
+              <span>বাংলাদেশের ডিজিটাল কৃষি সরবরাহ প্ল্যাটফর্ম</span>
             </div>
 
             {/* Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
-              Find Agricultural Supply <br />
+              সারা দেশের তাজা কৃষি পণ্য <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 via-emerald-300 to-amber-300">
-                Across Bangladesh
+                সরাসরি কৃষক থেকে সংগ্রহ করুন
               </span>
             </h1>
 
             <p className="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed">
-              বাংলাদেশ জুড়ে কৃষকের তাজা পণ্য সরবরাহ খুঁজুন। আলু, ডিম, মাছ, ধান ও গবাদিপশুর সরাসরি পাইকারি রিয়েল-টাইম তথ্য।
+              আলু, ডিম, মাছ, ধান ও গবাদিপশুর তাজা পাইকারি সরবরাহ সরাসরি পান। কোনো মাধ্যম ছাড়া সরাসরি কৃষকের সাথে কথা বলুন।
             </p>
 
             {/* DUAL CTA BUTTONS */}
@@ -65,14 +74,14 @@ export default function HomePage() {
                 className="flex items-center justify-center gap-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-2xl text-base shadow-lg shadow-amber-500/30 transition-all hover:shadow-amber-500/50 hover:-translate-y-0.5 active:translate-y-0"
               >
                 <span className="text-xl">🧑‍🌾</span>
-                <span>Post Produce</span>
+                <span>ফসল পোস্ট করুন</span>
               </Link>
               <Link
                 href="/browse"
                 className="flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 border-2 border-white/30 hover:border-white/50 text-white font-bold py-4 px-8 rounded-2xl text-base backdrop-blur transition-all hover:-translate-y-0.5 active:translate-y-0"
               >
                 <span className="text-xl">🏪</span>
-                <span>Browse Supply</span>
+                <span>পণ্য দেখুন</span>
               </Link>
             </div>
 
@@ -80,19 +89,19 @@ export default function HomePage() {
             <div className="pt-6 flex flex-wrap gap-3">
               <div className="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full backdrop-blur">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Verified Farmers</span>
+                <span>যাচাইকৃত কৃষক</span>
               </div>
               <div className="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full backdrop-blur">
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Verified Dealers</span>
+                <span>যাচাইকৃত পাইকার</span>
               </div>
               <div className="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full backdrop-blur">
                 <PhoneCall className="w-4 h-4" />
-                <span>Direct Contact</span>
+                <span>সরাসরি যোগাযোগের সুযোগ</span>
               </div>
               <div className="flex items-center gap-2 bg-emerald-500/15 border border-emerald-500/25 text-emerald-300 text-sm font-medium px-4 py-2 rounded-full backdrop-blur">
                 <MapPin className="w-4 h-4" />
-                <span>Location-Based Search</span>
+                <span>জেলাভিত্তিক অনুসন্ধান</span>
               </div>
             </div>
 
@@ -105,7 +114,7 @@ export default function HomePage() {
                   <Search className="w-5 h-5 text-slate-400 absolute left-3" />
                   <input
                     type="text"
-                    placeholder="Search product (e.g. Potato, Egg, Fish)..."
+                    placeholder="পণ্যের নাম লিখুন (যেমন: আলু, ডিম, মাছ)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-3 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-slate-50 border border-slate-200"
@@ -120,7 +129,7 @@ export default function HomePage() {
                     onChange={(e) => setSelectedDistrict(e.target.value ? Number(e.target.value) : null)}
                     className="w-full pl-10 pr-3 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-slate-50 border border-slate-200 text-slate-700 appearance-none"
                   >
-                    <option value="">All Districts (সকল জেলা)</option>
+                    <option value="">সকল জেলা</option>
                     {BANGLADESH_LOCATIONS.flatMap((div) => div.districts).map((dist) => (
                       <option key={dist.id} value={dist.id}>
                         {dist.nameBn} ({dist.nameEn})
@@ -136,7 +145,7 @@ export default function HomePage() {
                     className="w-full h-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-4 rounded-xl text-sm transition-colors shadow-md shadow-brand-600/30"
                   >
                     <Search className="w-4 h-4" />
-                    <span>Search Index</span>
+                    <span>অনুসন্ধান করুন</span>
                   </Link>
                 </div>
               </div>
@@ -153,30 +162,30 @@ export default function HomePage() {
             <div className="text-center space-y-1">
               <div className="flex items-center justify-center gap-2">
                 <BarChart3 className="w-5 h-5 text-brand-400" />
-                <span className="text-2xl sm:text-3xl font-black text-white">12,500+</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">১২,৫০০+</span>
               </div>
-              <p className="text-xs text-slate-400 font-medium">Active Listings</p>
+              <p className="text-xs text-slate-400 font-medium">সচল পোস্ট</p>
             </div>
             <div className="text-center space-y-1">
               <div className="flex items-center justify-center gap-2">
                 <Globe className="w-5 h-5 text-brand-400" />
-                <span className="text-2xl sm:text-3xl font-black text-white">64</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">৬৪</span>
               </div>
-              <p className="text-xs text-slate-400 font-medium">Districts Covered</p>
+              <p className="text-xs text-slate-400 font-medium">জেলায় সেবা</p>
             </div>
             <div className="text-center space-y-1">
               <div className="flex items-center justify-center gap-2">
                 <Users className="w-5 h-5 text-amber-400" />
-                <span className="text-2xl sm:text-3xl font-black text-white">1,200+</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">১,২০০+</span>
               </div>
-              <p className="text-xs text-slate-400 font-medium">Farmers & Producers</p>
+              <p className="text-xs text-slate-400 font-medium">নিবন্ধিত কৃষক</p>
             </div>
             <div className="text-center space-y-1">
               <div className="flex items-center justify-center gap-2">
                 <Handshake className="w-5 h-5 text-amber-400" />
-                <span className="text-2xl sm:text-3xl font-black text-white">300+</span>
+                <span className="text-2xl sm:text-3xl font-black text-white">৩০০+</span>
               </div>
-              <p className="text-xs text-slate-400 font-medium">Dealers & Wholesalers</p>
+              <p className="text-xs text-slate-400 font-medium">ব্যবসায়ী ও পাইকার</p>
             </div>
           </div>
         </div>
@@ -199,7 +208,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-            {CATEGORIES.map((cat) => {
+            {categories.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               return (
                 <button
@@ -230,13 +239,13 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-slate-900">Live Agricultural Supply Index</h2>
+              <h2 className="text-2xl font-black text-slate-900">লাইভ কৃষি সরবরাহ সূচক</h2>
               <span className="bg-brand-100 text-brand-800 text-xs font-bold px-2.5 py-0.5 rounded-full border border-brand-200">
-                {filteredListings.length} Lots Available
+                {filteredListings.length} টি পণ্য সচল
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Verified supply listings posted directly by farmers and production hubs
+              কৃষক ও উৎপাদন কেন্দ্র থেকে সরাসরি সংগৃহীত তাজা পণ্যের তালিকা
             </p>
           </div>
 
@@ -244,13 +253,19 @@ export default function HomePage() {
             href="/browse"
             className="inline-flex items-center gap-1.5 text-brand-700 font-semibold text-sm hover:gap-2 transition-all"
           >
-            <span>View Full Directory</span>
+            <span>সব পণ্য দেখুন</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {/* Listings Grid */}
-        {filteredListings.length > 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-slate-200 h-64 animate-pulse" />
+            ))}
+          </div>
+        ) : filteredListings.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredListings.map((item) => (
               <ListingCard
@@ -288,10 +303,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
             <h2 className="text-2xl font-black text-slate-900">
-              Why Aaroth?
+              কেন "আমার আড়ত"?
             </h2>
             <p className="text-slate-600 text-sm">
-              The fastest way to discover, connect, and source agricultural produce across Bangladesh.
+              সারা বাংলাদেশের তাজা কৃষি পণ্য দ্রুততম সময়ে খুঁজে নেওয়া ও কেনাবেচার সেরা মাধ্যম।
             </p>
           </div>
 
@@ -300,9 +315,9 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-2xl bg-brand-100 text-brand-700 flex items-center justify-center mx-auto">
                 <Zap className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Find Supply Faster</h3>
+              <h3 className="text-base font-bold text-slate-900">দ্রুত পণ্য খুঁজুন</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Search by crop, district, quantity, and price. No more phone calls to 10 middlemen.
+                পণ্য, জেলা, পরিমাণ ও দাম দিয়ে মুহূর্তেই অনুসন্ধান করুন। মধ্যস্বত্বভোগীদের পেছনে সময় নষ্ট হবে না।
               </p>
             </div>
 
@@ -310,9 +325,9 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
                 <PhoneCall className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Connect Directly</h3>
+              <h3 className="text-base font-bold text-slate-900">সরাসরি কৃষককে কল</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Call verified farmers and producers directly. No middlemen, no commissions.
+                যাচাইকৃত কৃষক ও উৎপাদনকারীদের সাথে সরাসরি ফোনে কথা বলুন। কোনো কমিশন বা মধ্যস্থতাকারী নেই।
               </p>
             </div>
 
@@ -320,9 +335,9 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
                 <DollarSign className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Reduce Sourcing Costs</h3>
+              <h3 className="text-base font-bold text-slate-900">স্বচ্ছ ও সঠিক দাম</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Transparent pricing eliminates guesswork. Compare rates across districts instantly.
+                সঠিক বাজার দর সরাসরি জানুন। বিভিন্ন জেলার দাম তুলনা করে সেরা দামে কেনাবেচা করুন।
               </p>
             </div>
 
@@ -330,9 +345,9 @@ export default function HomePage() {
               <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mx-auto">
                 <Compass className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Discover Opportunities</h3>
+              <h3 className="text-base font-bold text-slate-900">৬৪ জেলার নেটওয়ার্ক</h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Explore agricultural supply from 64 districts. Find new sources you never knew existed.
+                দেশের যেকোনো প্রান্তের কৃষি পণ্যের নতুন সরবরাহ ও যোগাযোগের সুযোগ এক ক্লিকেই।
               </p>
             </div>
           </div>

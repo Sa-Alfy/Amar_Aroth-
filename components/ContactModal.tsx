@@ -34,7 +34,7 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
         {/* Header Badge */}
         <div className="flex items-center gap-2 text-xs font-semibold text-brand-700 bg-brand-50 px-3 py-1.5 rounded-full w-fit mb-4 border border-brand-200">
           <ShieldCheck className="w-4 h-4 text-brand-600" />
-          <span>Direct Contact Revealed</span>
+          <span>সরাসরি যোগাযোগের নম্বর</span>
         </div>
 
         {/* Seller Info Card */}
@@ -48,8 +48,10 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
                 </span>
               )}
             </h3>
-            <p className="text-xs text-slate-500 capitalize">
-              Role: <span className="font-medium text-slate-700">{listing.sellerType}</span>
+            <p className="text-xs text-slate-500">
+              পরিচয়: <span className="font-medium text-slate-700">
+                {listing.sellerType === 'farmer' ? 'কৃষক' : listing.sellerType === 'aggregator' ? 'সংগ্রাহক' : 'সমবায়'}
+              </span>
             </p>
           </div>
 
@@ -79,7 +81,7 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
           {/* Phone Call Call-To-Action */}
           <div className="pt-2 text-center space-y-3">
             <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-              <span className="text-xs text-slate-500 block mb-1">Mobile Number (সরাসরি নম্বর):</span>
+              <span className="text-xs text-slate-500 block mb-1">মোবাইল নম্বর:</span>
               <span className="text-2xl font-black text-slate-900 tracking-wider font-mono">
                 {listing.sellerPhone}
               </span>
@@ -90,11 +92,11 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
               className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white py-3.5 px-4 rounded-xl font-semibold text-base shadow-md shadow-brand-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <PhoneCall className="w-5 h-5 animate-pulse" />
-              <span>Call Seller Now (ফোন দিন)</span>
+              <span>এখনই কল দিন</span>
             </a>
 
             <p className="text-[11px] text-slate-400">
-              Negotiate price, delivery terms, and payment directly with the seller offline.
+              দাম, পরিবহন সুবিধা এবং মূল্য পরিশোধের শর্ত সরাসরি কৃষকের সাথে ফোনে আলোচনা করুন।
             </p>
           </div>
         </div>
