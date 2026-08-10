@@ -1,11 +1,17 @@
-'use client';
+﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Store, PlusCircle, Search, User, ShieldCheck, Menu, X, PhoneCall } from 'lucide-react';
+import { Store, PlusCircle, Search, User, ShieldCheck, Menu, X, PhoneCall, LogIn, UserPlus } from 'lucide-react';
+import { getStoredUser, UserProfile } from '@/lib/api/auth';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    setCurrentUser(getStoredUser());
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
@@ -53,11 +59,38 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* অ্যাকশন বাটন */}
-          <div className="flex items-center gap-3">
+          {/* অ্যাকশন বাটন ও লগইন/রেজিস্ট্রেশন */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {currentUser ? (
+              <Link
+                href="/account"
+                className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-2 rounded-xl"
+              >
+                <User className="w-4 h-4 text-emerald-600" />
+                <span className="max-w-[100px] truncate">{currentUser.fullName}</span>
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="hidden sm:flex items-center gap-1 text-slate-700 hover:text-brand-700 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition-all"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>লগইন</span>
+                </Link>
+                <Link
+                  href="/signup"
+                  className="hidden sm:flex items-center gap-1 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-800 text-xs font-bold px-3 py-2 rounded-xl transition-all"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-brand-600" />
+                  <span>রেজিস্ট্রেশন</span>
+                </Link>
+              </>
+            )}
+
             <Link
               href="/post-supply"
-              className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-amber-500/30 transition-all hover:shadow-amber-500/50 hover:-translate-y-0.5 active:translate-y-0"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-3.5 sm:px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-md shadow-amber-500/30 transition-all hover:shadow-amber-500/50 hover:-translate-y-0.5 active:translate-y-0"
             >
               <PlusCircle className="w-4 h-4" />
               <span>পোস্ট করুন</span>
@@ -95,12 +128,32 @@ export default function Navbar() {
             <span>আমার পোস্ট ও অ্যাকাউন্ট</span>
           </Link>
 
+          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+            <Link
+              href="/login"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-slate-800 font-bold text-xs rounded-xl bg-slate-100 border border-slate-200"
+            >
+              <LogIn className="w-4 h-4 text-slate-600" />
+              <span>লগইন করুন</span>
+            </Link>
+
+            <Link
+              href="/signup"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-brand-800 font-bold text-xs rounded-xl bg-brand-50 border border-brand-200"
+            >
+              <UserPlus className="w-4 h-4 text-brand-600" />
+              <span>রেজিস্ট্রেশন</span>
+            </Link>
+          </div>
+
           <Link
             href="/admin"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-slate-600 font-medium rounded-lg hover:bg-slate-50"
+            className="flex items-center gap-2 px-3 py-2 text-slate-600 font-medium rounded-lg hover:bg-slate-50 text-xs"
           >
-            <ShieldCheck className="w-5 h-5 text-amber-600" />
+            <ShieldCheck className="w-4 h-4 text-amber-600" />
             <span>অ্যাডমিন পরিচালনা</span>
           </Link>
 
@@ -116,4 +169,3 @@ export default function Navbar() {
     </header>
   );
 }
-
