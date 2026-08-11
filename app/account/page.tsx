@@ -1,13 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { INITIAL_LISTINGS, SupplyListing, ListingStatus } from '@/lib/mockData';
+import { fetchCurrentUser, UserProfile } from '@/lib/client/api';
 import { User, Package, Eye, PhoneCall, CheckCircle2, PlusCircle, AlertCircle, Edit3, Trash2 } from 'lucide-react';
 
 export default function AccountPage() {
   const [userListings, setUserListings] = useState<SupplyListing[]>(INITIAL_LISTINGS);
   const [filterRole, setFilterRole] = useState<'farmer' | 'dealer'>('farmer');
+  const [user, setUser] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    fetchCurrentUser().then(setUser);
+  }, []);
 
   // Status toggle handler
   const handleStatusChange = (listingId: string, newStatus: ListingStatus) => {

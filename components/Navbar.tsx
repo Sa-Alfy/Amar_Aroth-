@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Store, PlusCircle, Search, User, ShieldCheck, Menu, X, PhoneCall, LogIn, UserPlus } from 'lucide-react';
-import { getStoredUser, UserProfile } from '@/lib/api/auth';
+import { fetchCurrentUser, UserProfile } from '@/lib/client/api';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    setCurrentUser(getStoredUser());
+    fetchCurrentUser().then(setCurrentUser);
   }, []);
 
   return (

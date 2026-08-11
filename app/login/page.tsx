@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserRole, loginWithPhoneAndPassword, requestPasswordResetOtp, verifyOtpAndResetPassword } from '@/lib/api/auth';
+import { UserRole, login, requestPasswordResetOtp, verifyOtpAndResetPassword } from '@/lib/client/api';
 import {
   Store, Phone, Lock, Eye, EyeOff, ShieldCheck, User,
   Store as StoreIcon, Briefcase, X, MessageSquare, KeyRound,
@@ -271,7 +271,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setErrorMessage(null);
 
-    const res = await loginWithPhoneAndPassword(phone, password, selectedRole);
+    const res = await login(phone, password, selectedRole);
     setIsLoading(false);
 
     if (!res.success) {

@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserRole, registerUser } from '@/lib/api/auth';
-import { getLocations } from '@/lib/api/listings';
+import { UserRole, signup, fetchLocations } from '@/lib/client/api';
 import { BANGLADESH_LOCATIONS, LocationDivision } from '@/lib/mockData';
 import {
   Store, Phone, Lock, Eye, EyeOff, CheckCircle2, ShieldCheck,
@@ -210,7 +209,7 @@ export default function SignupPage() {
   const activeRole = ROLES.find((r) => r.id === role)!;
 
   useEffect(() => {
-    getLocations().then((data) => {
+    fetchLocations().then((data) => {
       setLocations(data);
       if (data.length > 0) {
         setDivisionId(data[0].id);
@@ -274,7 +273,7 @@ export default function SignupPage() {
     setIsLoading(true);
     setErrorMessage(null);
 
-    const res = await registerUser({
+    const res = await signup({
       role,
       fullName: fullName.trim(),
       phone: phone.trim(),

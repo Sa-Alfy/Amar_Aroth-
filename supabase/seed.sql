@@ -191,3 +191,13 @@ insert into public.listing_images (listing_id, image_url, sort_order) values
   ('a9999999-9999-9999-9999-999999999999', 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80', 1),
   ('a0000000-0000-0000-0000-000000000000', 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?auto=format&fit=crop&w=800&q=80', 1)
 on conflict (id) do nothing;
+
+-- 7. SEED INITIAL MARKET PRICE AGGREGATES
+insert into public.market_price_aggregates (category_id, upazila_id, district_id, avg_price, min_price, max_price, std_dev, sample_count, period_date) values
+  (1, 1001, 101, 28.50, 25.00, 32.00, 2.10, 15, current_date), -- Potato in Shibganj, Bogura
+  (2, 1002, 102, 10.20, 9.80, 11.00, 0.40, 28, current_date),  -- Eggs in Sreepur, Gazipur
+  (3, 1003, 103, 750.00, 700.00, 820.00, 35.00, 8, current_date), -- Shrimp in Shyamnagar, Satkhira
+  (4, 1004, 104, 3400.00, 3300.00, 3550.00, 80.00, 12, current_date), -- Miniket Rice in Mahadevpur, Naogaon
+  (5, 1005, 105, 2200.00, 2000.00, 2450.00, 110.00, 20, current_date) -- Onion in Santhia, Pabna
+on conflict (category_id, upazila_id, period_date) do nothing;
+

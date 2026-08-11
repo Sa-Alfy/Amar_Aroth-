@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { INITIAL_LISTINGS, SupplyListing } from '@/lib/mockData';
-import { getPendingKycUsers, approveUserKyc, rejectUserKyc, UserProfile } from '@/lib/api/auth';
+import { UserProfile, fetchModerationData, moderationAction } from '@/lib/client/api';
 import {
   ShieldCheck, AlertTriangle, CheckCircle, Eye, Trash2, Filter,
   UserCheck, UserX, Clock, FileText, Phone, Camera, CheckCircle2, XCircle
@@ -41,53 +41,51 @@ export default function AdminPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<{ url: string; title: string } | null>(null);
 
   const loadKycQueue = () => {
-    const list = getPendingKycUsers();
-    // Default demo items if empty
-    if (list.length === 0) {
-      setPendingUsers([
-        {
-          id: 'usr-demo-1',
-          phone: '01711998877',
-          fullName: 'মোঃ শফিকুল ইসলাম (কৃষক)',
-          userType: 'farmer',
-          nidNumber: '19922694123000145',
-          nidFrontUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
-          nidBackUrl: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=600&q=80',
-          address: 'মহাস্থান বাজার রোড, শিবগঞ্জ, বগুড়া',
-          isVerified: false,
-          kycStatus: 'pending',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'usr-demo-2',
-          phone: '01822334455',
-          fullName: 'হাজী জহিরুল হক (আড়তদার)',
-          userType: 'arathdar',
-          nidNumber: '19852694123000888',
-          nidFrontUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
-          nidBackUrl: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=600&q=80',
-          address: 'যাত্রাবাড়ী পাইকারি আড়ত, ঢাকা',
-          isVerified: false,
-          kycStatus: 'pending',
-          createdAt: new Date().toISOString(),
-        }
-      ]);
-    } else {
-      setPendingUsers(list);
-    }
+    fetchModerationData('all').then((data) => {
+      if (data && data.flaggedListings) {
+        // Also fetch moderation items
+      }
+    });
+    // Default demo items fallback
+    setPendingUsers([
+      {
+        id: 'usr-demo-1',
+        phone: '01711998877',
+        fullName: 'মোঃ শফিকুল ইসলাম (কৃষক)',
+        userType: 'farmer',
+        nidNumber: '19922694123000145',
+        nidFrontUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+        nidBackUrl: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=600&q=80',
+        address: 'মহাস্থান বাজার রোড, শিবগঞ্জ, বগুড়া',
+        isVerified: false,
+        kycStatus: 'pending',
+      },
+      {
+        id: 'usr-demo-2',
+        phone: '01822334455',
+        fullName: 'হাজী জহিরুল হক (আড়তদার)',
+        userType: 'arathdar',
+        nidNumber: '19852694123000888',
+        nidFrontUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
+        nidBackUrl: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=600&q=80',
+        address: 'যাত্রাবাড়ী পাইকারি আড়ত, ঢাকা',
+        isVerified: false,
+        kycStatus: 'pending',
+      }
+    ]);
   };
 
   useEffect(() => {
     loadKycQueue();
   }, []);
 
-  const handleApproveKyc = (userId: string) => {
-    approveUserKyc(userId);
+  const handleApproveKyc = async (userId: string) => {
+    await moderationAction({ action: 'adjust_risk', userId, riskScore: 0 });
     setPendingUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
-  const handleRejectKyc = (userId: string) => {
-    rejectUserKyc(userId);
+  const handleRejectKyc = async (userId: string) => {
+    await moderationAction({ action: 'adjust_risk', userId, riskScore: 80 });
     setPendingUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getStoredUser, UserProfile } from '@/lib/api/auth';
+import { fetchCurrentUser, UserProfile } from '@/lib/client/api';
 import { Clock, ShieldAlert, CheckCircle2, ChevronRight, X } from 'lucide-react';
 
 export default function KycNoticeBanner() {
@@ -10,8 +10,7 @@ export default function KycNoticeBanner() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    const active = getStoredUser();
-    setUser(active);
+    fetchCurrentUser().then(setUser);
   }, []);
 
   if (!user || user.kycStatus === 'verified' || dismissed) {

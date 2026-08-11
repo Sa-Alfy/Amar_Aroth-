@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CATEGORIES, BANGLADESH_LOCATIONS, SupplyListing, Category } from '@/lib/mockData';
-import { getSupplyListings, getCategories } from '@/lib/api/listings';
+import { fetchListings, fetchCategories } from '@/lib/client/api';
 import ListingCard from '@/components/ListingCard';
 import ContactModal from '@/components/ContactModal';
 import { Search, MapPin, Filter, ArrowRight, ShieldCheck, PhoneCall, TrendingUp, Sparkles, Zap, Globe, Users, BarChart3, CheckCircle2, Handshake, DollarSign, Compass } from 'lucide-react';
@@ -17,15 +17,17 @@ export default function HomePage() {
   const [categories, setCategories] = useState<Category[]>(CATEGORIES);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load categories dynamically from Supabase
+  // Load categories dynamically from backend API
   useEffect(() => {
-    getCategories().then(setCategories);
+    fetchCategories().then((res) => {
+      if (res && res.length > 0) setCategories(res);
+    });
   }, []);
 
   // Fetch listings dynamically when filters change
   useEffect(() => {
     setIsLoading(true);
-    getSupplyListings({
+    fetchListings({
       categoryId: selectedCategory,
       districtId: selectedDistrict,
       searchQuery,

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { CATEGORIES, MEASUREMENT_UNITS, BANGLADESH_LOCATIONS, INITIAL_LISTINGS, SupplyListing, ListingStatus, Category, LocationDivision } from '@/lib/mockData';
-import { getSupplyListings, getCategories, getLocations } from '@/lib/api/listings';
+import { fetchListings, fetchCategories, fetchLocations } from '@/lib/client/api';
 import ListingCard from '@/components/ListingCard';
 import ContactModal from '@/components/ContactModal';
 import { Search, Filter, RefreshCw, SlidersHorizontal, MapPin, Tag, Package, Check, X } from 'lucide-react';
@@ -23,16 +23,16 @@ export default function BrowsePage() {
   const [activeContactListing, setActiveContactListing] = useState<SupplyListing | null>(null);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  // Load reference data dynamically from Supabase on mount
+  // Load reference data dynamically from backend API on mount
   useEffect(() => {
-    getCategories().then(setCategories);
-    getLocations().then(setLocations);
+    fetchCategories().then((res) => { if (res && res.length > 0) setCategories(res); });
+    fetchLocations().then((res) => { if (res && res.length > 0) setLocations(res); });
   }, []);
 
-  // Fetch listings from Supabase when filters change
+  // Fetch listings from backend API when filters change
   useEffect(() => {
     setIsLoading(true);
-    getSupplyListings({
+    fetchListings({
       categoryId: selectedCategory,
       districtId: selectedDistrict,
       searchQuery: searchQuery,

@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, MEASUREMENT_UNITS, BANGLADESH_LOCATIONS, INITIAL_LISTINGS, SupplyListing, Category, MeasurementUnit, LocationDivision } from '@/lib/mockData';
-import { getCategories, getMeasurementUnits, getLocations, createSupplyListing, isSupabaseConfigured } from '@/lib/api/listings';
-import { getStoredUser, UserProfile } from '@/lib/api/auth';
+import { fetchCategories, fetchUnits, fetchLocations, createListing, fetchCurrentUser, UserProfile } from '@/lib/client/api';
 import { PlusCircle, Sparkles, CheckCircle2, ArrowRight, Upload, Image as ImageIcon, MapPin, Tag, Package, Info, Lock, Clock, ShieldAlert } from 'lucide-react';
 
 export default function PostSupplyPage() {
@@ -35,26 +34,31 @@ export default function PostSupplyPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
-  // Load dynamic form options from Supabase on mount & load user
+  // Load dynamic form options from API on mount & load user
   useEffect(() => {
-    const user = getStoredUser();
-    setCurrentUser(user);
-    if (user) {
-      if (user.fullName) setSellerName(user.fullName);
-      if (user.phone) setSellerPhone(user.phone);
-    }
+    fetchCurrentUser().then((user) => {
+      setCurrentUser(user);
+      if (user) {
+        if (user.fullName) setSellerName(user.fullName);
+        if (user.phone) setSellerPhone(user.phone);
+      }
+    });
 
-    getCategories().then((data) => {
-      setCategories(data);
-      if (data.length > 0) setCategoryId(data[0].id);
+    fetchCategories().then((data) => {
+      if (data && data.length > 0) {
+        setCategories(data);
+        setCategoryId(data[0].id);
+      }
     });
-    getMeasurementUnits().then((data) => {
-      setMeasurementUnits(data);
-      if (data.length > 0) setUnitId(data[0].id);
+    fetchUnits().then((data) => {
+      if (data && data.length > 0) {
+        setMeasurementUnits(data);
+        setUnitId(data[0].id);
+      }
     });
-    getLocations().then((data) => {
-      setLocations(data);
-      if (data.length > 0) {
+    fetchLocations().then((data) => {
+      if (data && data.length > 0) {
+        setLocations(data);
         setDivisionId(data[0].id);
         if (data[0].districts.length > 0) {
           setDistrictId(data[0].districts[0].id);
@@ -84,73 +88,25 @@ export default function PostSupplyPage() {
     setIsSubmitting(true);
     setSubmitError(null);
 
-    if (isSupabaseConfigured()) {
-      // Save to Supabase — use sellerPhone as the temporary user ID for demo
-      // In production this would be the authenticated user's UUID
-      const DEMO_SELLER_ID = '11111111-1111-1111-1111-111111111111';
-      const result = await createSupplyListing({
-        sellerId: DEMO_SELLER_ID,
-        createdByUserId: DEMO_SELLER_ID,
-        categoryId,
-        title,
-        description,
-        quantity: Number(quantity),
-        unitId,
-        expectedPrice: Number(expectedPrice),
-        divisionId,
-        districtId,
-        upazilaId,
-        specificLocation: unionName || undefined,
-        imageUrls: imageUrls.filter((u) => u.trim().length > 0),
-      });
+    const result = await createListing({
+      sellerId: currentUser?.id,
+      categoryId,
+      title,
+      description,
+      quantity: Number(quantity),
+      unitId,
+      expectedPrice: Number(expectedPrice),
+      divisionId,
+      districtId,
+      upazilaId,
+      specificLocation: unionName || undefined,
+      imageUrls: imageUrls.filter((u) => u.trim().length > 0),
+    });
 
-      if (!result.success) {
-        setSubmitError(result.error || 'Failed to publish listing. Please try again.');
-        setIsSubmitting(false);
-        return;
-      }
-    } else {
-      // Demo fallback: prepend to in-memory mock list
-      const catObj = categories.find((c) => c.id === categoryId);
-      const unitObj = measurementUnits.find((u) => u.id === unitId);
-      const newListing: SupplyListing = {
-        id: `lst-${Date.now()}`,
-        createdByUserId: 'usr-farmer-current',
-        ownerUserId: 'usr-farmer-current',
-        sellerName,
-        sellerPhone,
-        isSellerVerified: true,
-        sellerType,
-        categoryId,
-        categoryNameEn: catObj?.nameEn || 'Commodity',
-        categoryNameBn: catObj?.nameBn || 'পণ্য',
-        title,
-        description,
-        quantity: Number(quantity),
-        unitId,
-        unitSymbol: unitObj?.symbol || 'kg',
-        unitSymbolBn: unitObj?.nameBn || 'কেজি',
-        expectedPricePerUnit: Number(expectedPrice),
-        currency: 'BDT',
-        divisionId,
-        divisionNameEn: selectedDivObj?.nameEn || 'Division',
-        districtId,
-        districtNameEn: selectedDistObj?.nameEn || 'District',
-        districtNameBn: selectedDistObj?.nameBn || 'জেলা',
-        upazilaId,
-        upazilaNameEn: availableUpazilas.find((u) => u.id === upazilaId)?.nameEn || 'Upazila',
-        upazilaNameBn: availableUpazilas.find((u) => u.id === upazilaId)?.nameBn || 'উপজিলা',
-        unionName,
-        status: 'active',
-        images: imageUrls.filter((u) => u.trim()).length > 0
-          ? imageUrls.filter((u) => u.trim())
-          : ['https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&w=800&q=80'],
-        availableFrom: new Date().toISOString().split('T')[0],
-        viewCount: 1,
-        contactCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-      INITIAL_LISTINGS.unshift(newListing);
+    if (!result.success) {
+      setSubmitError(result.error || 'Failed to publish listing. Please try again.');
+      setIsSubmitting(false);
+      return;
     }
 
     setIsSubmitting(false);
