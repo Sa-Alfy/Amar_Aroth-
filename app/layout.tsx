@@ -4,6 +4,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import KycNoticeBanner from '@/components/KycNoticeBanner';
+import BottomNav from '@/components/BottomNav';
 
 const hindSiliguri = Hind_Siliguri({
   subsets: ['bengali', 'latin'],
@@ -34,8 +35,9 @@ export default function RootLayout({
       <body className="h-full flex flex-col bg-slate-50 text-slate-900 antialiased">
         <Navbar />
         <KycNoticeBanner />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <main className="flex-1 pb-20 md:pb-0">{children}</main>
+        <Footer className="hidden md:block" />
+        <BottomNav />
       </body>
     </html>
   );

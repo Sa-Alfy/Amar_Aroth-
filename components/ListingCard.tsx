@@ -137,15 +137,15 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
           </div>
         </div>
 
-        {/* ফোন বাটন */}
+        {/* ফোন বাটন — বড় ও সহজে চাপার জন্য বড় টাচ টার্গেট */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             onContactClick(listing);
           }}
-          className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm py-2.5 px-4 rounded-xl shadow-sm transition-colors mt-2"
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-emerald-700 hover:from-brand-700 hover:to-emerald-800 text-white font-bold text-sm sm:text-base py-3.5 sm:py-4 px-4 rounded-xl shadow-md shadow-brand-600/20 active:scale-[0.98] transition-all mt-2"
         >
-          <Phone className="w-4 h-4" />
+          <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
           <span>কৃষককে ফোন দিন</span>
         </button>
       </div>

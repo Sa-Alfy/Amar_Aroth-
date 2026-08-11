@@ -373,6 +373,116 @@ export default function BrowsePage() {
         </div>
       </div>
 
+      {/* MOBILE BOTTOM SHEET FILTER DRAWER */}
+      {isMobileFilterOpen && (
+        <div className="fixed inset-0 z-50 md:hidden bg-slate-900/60 backdrop-blur-sm flex flex-col justify-end animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300">
+            {/* Drawer Header */}
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5 text-brand-600" />
+                <h3 className="font-bold text-slate-900 text-base">পণ্য ফিল্টার করুন</h3>
+                <span className="text-xs bg-brand-100 text-brand-800 font-bold px-2 py-0.5 rounded-full">
+                  {filteredListings.length} টি ফল
+                </span>
+              </div>
+              <button
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Drawer Body (Scrollable) */}
+            <div className="p-4 overflow-y-auto space-y-6 flex-1">
+              {/* Category selector */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-2">ক্যাটাগরি</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    className={`py-2 px-3 rounded-xl text-xs font-semibold border text-left ${
+                      selectedCategory === null ? 'bg-brand-600 text-white border-brand-600' : 'bg-slate-50 border-slate-200'
+                    }`}
+                  >
+                    সকল ক্যাটাগরি
+                  </button>
+                  {categories.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedCategory(c.id)}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold border text-left flex items-center gap-1.5 ${
+                        selectedCategory === c.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      <span>{c.icon}</span>
+                      <span>{c.nameBn}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Division & District selector */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-2">জেলা ও বিভাগ</label>
+                <select
+                  value={selectedDistrict || ''}
+                  onChange={(e) => setSelectedDistrict(e.target.value ? Number(e.target.value) : null)}
+                  className="w-full p-3 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50"
+                >
+                  <option value="">সকল জেলা (৬৪ জেলা)</option>
+                  {availableDistricts.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.nameBn} ({d.nameEn})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Status selector */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-2">স্ট্যাটাস</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: 'সকল', value: 'all' },
+                    { label: '🟢 সচল', value: 'active' },
+                    { label: '🟡 আলোচনাধীন', value: 'negotiating' },
+                    { label: '🔵 সংরক্ষিত', value: 'reserved' },
+                  ].map((st) => (
+                    <button
+                      key={st.value}
+                      onClick={() => setSelectedStatus(st.value as any)}
+                      className={`py-2 px-3 rounded-xl text-xs font-semibold border ${
+                        selectedStatus === st.value ? 'bg-brand-600 text-white border-brand-600' : 'bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center gap-3">
+              <button
+                onClick={clearAllFilters}
+                className="py-3 px-4 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold"
+              >
+                রিসেট
+              </button>
+              <button
+                onClick={() => setIsMobileFilterOpen(false)}
+                className="flex-1 py-3 px-4 rounded-xl bg-brand-600 text-white text-xs font-bold shadow-md shadow-brand-600/30"
+              >
+                ফলাফল দেখুন ({filteredListings.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CONTACT MODAL REVEAL */}
       <ContactModal
         listing={activeContactListing}
