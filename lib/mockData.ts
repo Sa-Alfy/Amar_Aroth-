@@ -104,105 +104,122 @@ export const MEASUREMENT_UNITS: MeasurementUnit[] = [
 export const BANGLADESH_LOCATIONS: LocationDivision[] = [
   {
     id: 1,
-    nameEn: 'Rajshahi',
-    nameBn: 'রাজশাহী',
+    nameEn: 'Dhaka',
+    nameBn: 'ঢাকা',
     districts: [
-      {
-        id: 101,
-        nameEn: 'Bogra',
-        nameBn: 'বগুড়া',
-        upazilas: [
-          { id: 1001, nameEn: 'Shibganj', nameBn: 'শিবগঞ্জ' },
-          { id: 1002, nameEn: 'Mahasthangarh', nameBn: 'মহাস্থানগড়' },
-          { id: 1003, nameEn: 'Saharjan', nameBn: 'শাহজাহানপুর' },
-          { id: 1004, nameEn: 'Kahaloo', nameBn: 'কাহালু' }
-        ]
-      },
-      {
-        id: 102,
-        nameEn: 'Naogaon',
-        nameBn: 'নওগাঁ',
-        upazilas: [
-          { id: 1005, nameEn: 'Mohadevpur', nameBn: 'মহাদেবপুর' },
-          { id: 1006, nameEn: 'Dhamoirhat', nameBn: 'ধামইরহাট' }
-        ]
-      }
+      { id: 101, nameEn: 'Dhaka', nameBn: 'ঢাকা', upazilas: [{ id: 1001, nameEn: 'Savar', nameBn: 'সাভার' }, { id: 1002, nameEn: 'Dhamrai', nameBn: 'ধামরাই' }, { id: 1003, nameEn: 'Keraniganj', nameBn: 'কেরানীগঞ্জ' }] },
+      { id: 102, nameEn: 'Gazipur', nameBn: 'গাজীপুর', upazilas: [{ id: 1004, nameEn: 'Sreepur', nameBn: 'শ্রীপুর' }, { id: 1005, nameEn: 'Kapasia', nameBn: 'কাপাসিয়া' }, { id: 1006, nameEn: 'Kaliakair', nameBn: 'কালিয়াকৈর' }] },
+      { id: 103, nameEn: 'Tangail', nameBn: 'টাঙ্গাইল', upazilas: [{ id: 1007, nameEn: 'Ghatail', nameBn: 'ঘাটাইল' }, { id: 1008, nameEn: 'Madhupur', nameBn: 'মধুপুর' }, { id: 1009, nameEn: 'Sakhipur', nameBn: 'সখিপুর' }] },
+      { id: 104, nameEn: 'Munshiganj', nameBn: 'মুন্সীগঞ্জ', upazilas: [{ id: 1010, nameEn: 'Sirajdikhan', nameBn: 'সিরাজদিখান' }, { id: 1011, nameEn: 'Tongibari', nameBn: 'টঙ্গিবাড়ী' }] },
+      { id: 105, nameEn: 'Narsingdi', nameBn: 'নরসিংদী', upazilas: [{ id: 1012, nameEn: 'Shibpur', nameBn: 'শিবপুর' }, { id: 1013, nameEn: 'Raipura', nameBn: 'রায়পুরা' }] },
+      { id: 106, nameEn: 'Narayanganj', nameBn: 'নারায়ণগঞ্জ', upazilas: [{ id: 1014, nameEn: 'Araihazar', nameBn: 'আড়াইহাজার' }, { id: 1015, nameEn: 'Sonargaon', nameBn: 'সোনারগাঁ' }] },
+      { id: 107, nameEn: 'Faridpur', nameBn: 'ফরিদপুর', upazilas: [{ id: 1014, nameEn: 'Bhanga', nameBn: 'ভাঙ্গা' }, { id: 1015, nameEn: 'Boalmari', nameBn: 'বোয়ালমারী' }] },
+      { id: 108, nameEn: 'Madaripur', nameBn: 'মাদারীপুর', upazilas: [{ id: 1016, nameEn: 'Shibchar', nameBn: 'শিবচর' }, { id: 1017, nameEn: 'Rajoir', nameBn: 'রাজৈর' }] },
+      { id: 109, nameEn: 'Gopalganj', nameBn: 'গোপালগঞ্জ', upazilas: [{ id: 1018, nameEn: 'Kotalipara', nameBn: 'কোটালীপাড়া' }, { id: 1019, nameEn: 'Tungipara', nameBn: 'টুঙ্গিপাড়া' }] },
+      { id: 110, nameEn: 'Rajbari', nameBn: 'রাজবাড়ী', upazilas: [{ id: 1020, nameEn: 'Pangsha', nameBn: 'পাংশা' }] },
+      { id: 111, nameEn: 'Manikganj', nameBn: 'মানিকগঞ্জ', upazilas: [{ id: 1021, nameEn: 'Singair', nameBn: 'সিংগাইর' }] },
+      { id: 112, nameEn: 'Shariatpur', nameBn: 'শরীয়তপুর', upazilas: [{ id: 1022, nameEn: 'Naria', nameBn: 'নড়িয়া' }] },
+      { id: 113, nameEn: 'Kishoreganj', nameBn: 'কিশোরগঞ্জ', upazilas: [{ id: 1023, nameEn: 'Bhairab', nameBn: 'ভৈরব' }] }
     ]
   },
   {
     id: 2,
-    nameEn: 'Dhaka',
-    nameBn: 'ঢাকা',
+    nameEn: 'Chattogram',
+    nameBn: 'চট্টগ্রাম',
     districts: [
-      {
-        id: 201,
-        nameEn: 'Gazipur',
-        nameBn: 'গাজীপুর',
-        upazilas: [
-          { id: 2001, nameEn: 'Sreepur', nameBn: 'শ্রীপুর' },
-          { id: 2002, nameEn: 'Kapasia', nameBn: 'কাপাসিয়া' },
-          { id: 2003, nameEn: 'Kaliakair', nameBn: 'কালিয়াকৈর' }
-        ]
-      },
-      {
-        id: 202,
-        nameEn: 'Tangail',
-        nameBn: 'টাঙ্গাইল',
-        upazilas: [
-          { id: 2004, nameEn: 'Ghatail', nameBn: 'ঘাটাইল' },
-          { id: 2005, nameEn: 'Sakhipur', nameBn: 'সখিপুর' }
-        ]
-      },
-      {
-        id: 203,
-        nameEn: 'Munshiganj',
-        nameBn: 'মুন্সীগঞ্জ',
-        upazilas: [
-          { id: 2006, nameEn: 'Sirajdikhan', nameBn: 'সিরাজদিখান' },
-          { id: 2007, nameEn: 'Tongibari', nameBn: 'টঙ্গিবাড়ী' }
-        ]
-      }
+      { id: 114, nameEn: 'Chattogram', nameBn: 'চট্টগ্রাম', upazilas: [{ id: 1016, nameEn: 'Hathazari', nameBn: 'হাটহাজারী' }, { id: 1017, nameEn: 'Mirsarai', nameBn: 'মীরসরাই' }, { id: 1018, nameEn: 'Patiya', nameBn: 'পটিয়া' }] },
+      { id: 115, nameEn: 'Cox\'s Bazar', nameBn: 'কক্সবাজার', upazilas: [{ id: 1019, nameEn: 'Chakaria', nameBn: 'চকোরিয়া' }, { id: 1020, nameEn: 'Teknaf', nameBn: 'টেকনাফ' }] },
+      { id: 116, nameEn: 'Cumilla', nameBn: 'কুমিল্লা', upazilas: [{ id: 1021, nameEn: 'Chandina', nameBn: 'চান্দিনা' }, { id: 1022, nameEn: 'Daudkandi', nameBn: 'দাউদকান্দি' }] },
+      { id: 117, nameEn: 'Feni', nameBn: 'ফেনী', upazilas: [{ id: 1023, nameEn: 'Daganbhuiyan', nameBn: 'দাগনভূঞা' }] },
+      { id: 118, nameEn: 'Noakhali', nameBn: 'নোয়াখালী', upazilas: [{ id: 1024, nameEn: 'Begumganj', nameBn: 'বেগমগঞ্জ' }] },
+      { id: 119, nameEn: 'Lakshmipur', nameBn: 'লক্ষ্মীপুর', upazilas: [{ id: 1025, nameEn: 'Ramgati', nameBn: 'রামগতি' }] },
+      { id: 120, nameEn: 'Brahmanbaria', nameBn: 'ব্রাহ্মণবাড়িয়া', upazilas: [{ id: 1026, nameEn: 'Nabinagar', nameBn: 'নবীনগর' }] },
+      { id: 121, nameEn: 'Chandpur', nameBn: 'চাঁদপুর', upazilas: [{ id: 1027, nameEn: 'Hajiganj', nameBn: 'হাজীগঞ্জ' }] },
+      { id: 122, nameEn: 'Khagrachhari', nameBn: 'খাগড়াছড়ি', upazilas: [{ id: 1028, nameEn: 'Dighinala', nameBn: 'দীঘিনালা' }] },
+      { id: 123, nameEn: 'Rangamati', nameBn: 'রাঙ্গামাটি', upazilas: [{ id: 1029, nameEn: 'Kaptai', nameBn: 'কাপ্তাই' }] },
+      { id: 134, nameEn: 'Bandarban', nameBn: 'বান্দরবান', upazilas: [{ id: 1030, nameEn: 'Lama', nameBn: 'লামা' }] }
     ]
   },
   {
     id: 3,
-    nameEn: 'Khulna',
-    nameBn: 'খুলনা',
+    nameEn: 'Rajshahi',
+    nameBn: 'রাজশাহী',
     districts: [
-      {
-        id: 301,
-        nameEn: 'Shatkhira',
-        nameBn: 'সাতক্ষীরা',
-        upazilas: [
-          { id: 3001, nameEn: 'Shyamnagar', nameBn: 'শ্যামনগর' },
-          { id: 3002, nameEn: 'Kaliganj', nameBn: 'কালীগঞ্জ' }
-        ]
-      },
-      {
-        id: 302,
-        nameEn: 'Jessore',
-        nameBn: 'যশোর',
-        upazilas: [
-          { id: 3003, nameEn: 'Jhikargachha', nameBn: 'ঝিকরগাছা' },
-          { id: 3004, nameEn: 'Sharsha', nameBn: 'শার্শা' }
-        ]
-      }
+      { id: 125, nameEn: 'Rajshahi', nameBn: 'রাজশাহী', upazilas: [{ id: 1023, nameEn: 'Godagari', nameBn: 'গোদাগাড়ী' }, { id: 1024, nameEn: 'Tanore', nameBn: 'তানোর' }, { id: 1025, nameEn: 'Paba', nameBn: 'পবা' }] },
+      { id: 126, nameEn: 'Bogura', nameBn: 'বগুড়া', upazilas: [{ id: 1026, nameEn: 'Shibganj', nameBn: 'শিবগঞ্জ' }, { id: 1027, nameEn: 'Shahjahanpur', nameBn: 'শাহজাহানপুর' }, { id: 1028, nameEn: 'Kahaloo', nameBn: 'কাহালু' }, { id: 1029, nameEn: 'Sherpur', nameBn: 'শেরপুর' }] },
+      { id: 127, nameEn: 'Naogaon', nameBn: 'নওগাঁ', upazilas: [{ id: 1030, nameEn: 'Mahadevpur', nameBn: 'মহাদেবপুর' }, { id: 1031, nameEn: 'Dhamoirhat', nameBn: 'ধামইরহাট' }, { id: 1032, nameEn: 'Patnitala', nameBn: 'পত্নীতলা' }] },
+      { id: 128, nameEn: 'Pabna', nameBn: 'পাবনা', upazilas: [{ id: 1033, nameEn: 'Santhia', nameBn: 'সাঁথিয়া' }, { id: 1034, nameEn: 'Ishwardi', nameBn: 'ঈশ্বরদী' }, { id: 1035, nameEn: 'Sujanagar', nameBn: 'সুজানগর' }] },
+      { id: 129, nameEn: 'Sirajganj', nameBn: 'সিরাজগঞ্জ', upazilas: [{ id: 1036, nameEn: 'Shahjadpur', nameBn: 'শাহজাদপুর' }, { id: 1037, nameEn: 'Ullahpara', nameBn: 'উল্লাপাড়া' }] },
+      { id: 130, nameEn: 'Natore', nameBn: 'নাটোর', upazilas: [{ id: 1038, nameEn: 'Singra', nameBn: 'সিংড়া' }] },
+      { id: 131, nameEn: 'Chapainawabganj', nameBn: 'চাঁপাইনবাবগঞ্জ', upazilas: [{ id: 1038, nameEn: 'Shibganj', nameBn: 'শিবগঞ্জ' }, { id: 1039, nameEn: 'Nachole', nameBn: 'নাচোল' }] },
+      { id: 132, nameEn: 'Joypurhat', nameBn: 'জয়পুরহাট', upazilas: [{ id: 1040, nameEn: 'Panchbibi', nameBn: 'পাঁচবিবি' }] }
     ]
   },
   {
     id: 4,
+    nameEn: 'Rangpur',
+    nameBn: 'রংপুর',
+    districts: [
+      { id: 133, nameEn: 'Rangpur', nameBn: 'রংপুর', upazilas: [{ id: 1040, nameEn: 'Mithapukur', nameBn: 'মিঠাপুকুর' }, { id: 1041, nameEn: 'Pirganj', nameBn: 'পীরগঞ্জ' }] },
+      { id: 134, nameEn: 'Dinajpur', nameBn: 'দিনাজপুর', upazilas: [{ id: 1042, nameEn: 'Birganj', nameBn: 'বীরগঞ্জ' }, { id: 1043, nameEn: 'Nawabganj', nameBn: 'নবাবগঞ্জ' }, { id: 1044, nameEn: 'Phulbari', nameBn: 'ফুলবাড়ী' }] },
+      { id: 135, nameEn: 'Gaibandha', nameBn: 'গাইবান্ধা', upazilas: [{ id: 1045, nameEn: 'Gobindaganj', nameBn: 'গোবিন্দগঞ্জ' }] },
+      { id: 136, nameEn: 'Kurigram', nameBn: 'কুড়িগ্রাম', upazilas: [{ id: 1046, nameEn: 'Nageshwari', nameBn: 'নাগেশ্বরী' }] },
+      { id: 137, nameEn: 'Lalmonirhat', nameBn: 'লালমনিরহাট', upazilas: [{ id: 1047, nameEn: 'Patgram', nameBn: 'পাটগ্রাম' }] },
+      { id: 138, nameEn: 'Nilphamari', nameBn: 'নীলফামারী', upazilas: [{ id: 1048, nameEn: 'Saidpur', nameBn: 'সৈয়দপুর' }] },
+      { id: 139, nameEn: 'Panchagarh', nameBn: 'পঞ্চগড়', upazilas: [{ id: 1045, nameEn: 'Tetulia', nameBn: 'তেঁতুলিয়া' }] },
+      { id: 140, nameEn: 'Thakurgaon', nameBn: 'ঠাকুরগাঁও', upazilas: [{ id: 1049, nameEn: 'Pirganj', nameBn: 'পীরগঞ্জ' }] }
+    ]
+  },
+  {
+    id: 5,
+    nameEn: 'Khulna',
+    nameBn: 'খুলনা',
+    districts: [
+      { id: 141, nameEn: 'Khulna', nameBn: 'খুলনা', upazilas: [{ id: 1046, nameEn: 'Dumuria', nameBn: 'ডুমুরিয়া' }] },
+      { id: 142, nameEn: 'Satkhira', nameBn: 'সাতক্ষীরা', upazilas: [{ id: 1047, nameEn: 'Shyamnagar', nameBn: 'শ্যামনগর' }, { id: 1048, nameEn: 'Kaliganj', nameBn: 'কালীগঞ্জ' }] },
+      { id: 143, nameEn: 'Jessore', nameBn: 'যশোর', upazilas: [{ id: 1049, nameEn: 'Jhikargacha', nameBn: 'ঝিকরগাছা' }, { id: 1050, nameEn: 'Sharsha', nameBn: 'শার্শা' }] },
+      { id: 144, nameEn: 'Bagerhat', nameBn: 'বাগেরহাট', upazilas: [{ id: 1051, nameEn: 'Mongla', nameBn: 'মংলা' }] },
+      { id: 145, nameEn: 'Chuadanga', nameBn: 'চুয়াডাঙ্গা', upazilas: [{ id: 1052, nameEn: 'Damurhuda', nameBn: 'দামুড়হুদা' }] },
+      { id: 146, nameEn: 'Jhenaidah', nameBn: 'ঝিনাইদহ', upazilas: [{ id: 1053, nameEn: 'Shailkupa', nameBn: 'শৈলকুপা' }] },
+      { id: 147, nameEn: 'Kushtia', nameBn: 'কুষ্টিয়া', upazilas: [{ id: 1051, nameEn: 'Kumarkhali', nameBn: 'কুমারখালী' }, { id: 1052, nameEn: 'Daulatpur', nameBn: 'দৌলতপুর' }] },
+      { id: 148, nameEn: 'Magura', nameBn: 'মাগুরা', upazilas: [{ id: 1054, nameEn: 'Shreepur', nameBn: 'শ্রীপুর' }] },
+      { id: 149, nameEn: 'Meherpur', nameBn: 'মেহেরপুর', upazilas: [{ id: 1055, nameEn: 'Gangni', nameBn: 'গাংনী' }] },
+      { id: 150, nameEn: 'Narail', nameBn: 'নড়াইল', upazilas: [{ id: 1056, nameEn: 'Kalia', nameBn: 'কালিয়া' }] }
+    ]
+  },
+  {
+    id: 6,
+    nameEn: 'Barishal',
+    nameBn: 'বরিশাল',
+    districts: [
+      { id: 151, nameEn: 'Barishal', nameBn: 'বরিশাল', upazilas: [{ id: 1053, nameEn: 'Babuganj', nameBn: 'বাবুগঞ্জ' }, { id: 1054, nameEn: 'Gournadi', nameBn: 'গৌরনদী' }] },
+      { id: 152, nameEn: 'Barguna', nameBn: 'বরগুনা', upazilas: [{ id: 1057, nameEn: 'Amtali', nameBn: 'আমতলী' }] },
+      { id: 153, nameEn: 'Bhola', nameBn: 'ভোলা', upazilas: [{ id: 1055, nameEn: 'Char Fasson', nameBn: 'চরফ্যাশন' }] },
+      { id: 154, nameEn: 'Jhalokati', nameBn: 'ঝালকাঠি', upazilas: [{ id: 1058, nameEn: 'Rajapur', nameBn: 'রাজাপুর' }] },
+      { id: 155, nameEn: 'Patuakhali', nameBn: 'পটুয়াখালী', upazilas: [{ id: 1059, nameEn: 'Kalapara', nameBn: 'কলাপাড়া' }] },
+      { id: 156, nameEn: 'Pirojpur', nameBn: 'পিরোজপুর', upazilas: [{ id: 1060, nameEn: 'Mathbaria', nameBn: 'মঠবাড়িয়া' }] }
+    ]
+  },
+  {
+    id: 7,
+    nameEn: 'Sylhet',
+    nameBn: 'সিলেট',
+    districts: [
+      { id: 157, nameEn: 'Sylhet', nameBn: 'সিলেট', upazilas: [{ id: 1056, nameEn: 'Beanibazar', nameBn: 'বিয়ানীবাজার' }, { id: 1057, nameEn: 'Golapganj', nameBn: 'গোলাপগঞ্জ' }] },
+      { id: 158, nameEn: 'Habiganj', nameBn: 'হবিগঞ্জ', upazilas: [{ id: 1061, nameEn: 'Madhabpur', nameBn: 'মাধবপুর' }] },
+      { id: 159, nameEn: 'Moulvibazar', nameBn: 'মৌলভীবাজার', upazilas: [{ id: 1058, nameEn: 'Sreemangal', nameBn: 'শ্রীমঙ্গল' }] },
+      { id: 160, nameEn: 'Sunamganj', nameBn: 'সুনামগঞ্জ', upazilas: [{ id: 1062, nameEn: 'Jagannathpur', nameBn: 'জগন্নাথপুর' }] }
+    ]
+  },
+  {
+    id: 8,
     nameEn: 'Mymensingh',
     nameBn: 'ময়মনসিংহ',
     districts: [
-      {
-        id: 401,
-        nameEn: 'Mymensingh Sadar',
-        nameBn: 'ময়মনসিংহ সদর',
-        upazilas: [
-          { id: 4001, nameEn: 'Trishal', nameBn: 'ত্রিশাল' },
-          { id: 4002, nameEn: 'Fulbaria', nameBn: 'ফুলবাড়ীয়া' }
-        ]
-      }
+      { id: 161, nameEn: 'Mymensingh', nameBn: 'ময়মনসিংহ', upazilas: [{ id: 1059, nameEn: 'Trishal', nameBn: 'ত্রিশাল' }, { id: 1060, nameEn: 'Muktagachha', nameBn: 'মুক্তাগাছা' }, { id: 1061, nameEn: 'Bhaluka', nameBn: 'ভালুকা' }] },
+      { id: 162, nameEn: 'Jamalpur', nameBn: 'জামালপুর', upazilas: [{ id: 1062, nameEn: 'Islampur', nameBn: 'ইসলামপুর' }] },
+      { id: 163, nameEn: 'Netrokona', nameBn: 'নেত্রকোণা', upazilas: [{ id: 1063, nameEn: 'Kendua', nameBn: 'কেন্দুয়া' }] },
+      { id: 164, nameEn: 'Sherpur', nameBn: 'শেরপুর', upazilas: [{ id: 1063, nameEn: 'Nalitabari', nameBn: 'নালিতাবাড়ী' }] }
     ]
   }
 ];
