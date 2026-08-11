@@ -42,10 +42,6 @@
   p, span, li, td, th, label, button, a {
     line-height: 1.65;
   }
-
-  * {
-    min-font-size: 12px;
-  }
 }
 
 /* Primary Brand Button Helper Classes for Guaranteed Visibility */
