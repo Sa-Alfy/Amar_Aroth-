@@ -1,11 +1,27 @@
 import type { Metadata } from 'next';
+import { Hind_Siliguri, Inter } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import KycNoticeBanner from '@/components/KycNoticeBanner';
+
+const hindSiliguri = Hind_Siliguri({
+  subsets: ['bengali', 'latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-hind',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'Aaroth (আমার আড়ত) - Agricultural Supply Index Bangladesh',
-  description: 'Find Agricultural Supply Across Bangladesh. Connect directly with farmers, egg producers, potato growers, and fish farmers.',
+  title: 'আমার আড়ত (Amar Aroth) - Agricultural Supply Index Bangladesh',
+  description: 'বাংলাদেশের ৬৪ জেলায় তাজা কৃষি পণ্যের সরাসরি সরবরাহ সূচক। সরাসরি কৃষকের সাথে যোগাযোগ করুন। Find fresh agricultural supply across Bangladesh — connect directly with farmers, egg producers, potato growers, and fish farmers.',
 };
 
 export default function RootLayout({
@@ -14,9 +30,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="bn" className="h-full">
+    <html lang="bn" className={`h-full ${hindSiliguri.variable} ${inter.variable}`}>
       <body className="h-full flex flex-col bg-slate-50 text-slate-900 antialiased">
         <Navbar />
+        <KycNoticeBanner />
         <main className="flex-1">{children}</main>
         <Footer />
       </body>

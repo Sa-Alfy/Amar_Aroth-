@@ -80,16 +80,16 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
 
           {/* Phone Call Call-To-Action */}
           <div className="pt-2 text-center space-y-3">
-            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
-              <span className="text-xs text-slate-500 block mb-1">মোবাইল নম্বর:</span>
-              <span className="text-2xl font-black text-slate-900 tracking-wider font-mono">
+            <div className="p-4 bg-slate-900 rounded-xl border border-slate-700">
+              <span className="text-xs text-slate-400 block mb-1.5 uppercase font-semibold tracking-wider">মোবাইল নম্বর</span>
+              <span className="text-2xl font-black text-white tracking-widest font-mono">
                 {listing.sellerPhone}
               </span>
             </div>
 
             <a
               href={`tel:${listing.sellerPhone}`}
-              className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white py-3.5 px-4 rounded-xl font-semibold text-base shadow-md shadow-brand-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white py-4 px-4 rounded-xl font-bold text-base shadow-lg shadow-emerald-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[48px]"
             >
               <PhoneCall className="w-5 h-5 animate-pulse" />
               <span>এখনই কল দিন</span>

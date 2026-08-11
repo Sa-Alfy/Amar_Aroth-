@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -52,10 +52,11 @@ export default function Navbar() {
 
             <Link 
               href="/admin" 
-              className="text-slate-500 hover:text-slate-900 flex items-center gap-1 text-xs bg-slate-100 px-2.5 py-1.5 rounded-lg border border-slate-200"
+              className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all opacity-60 hover:opacity-100"
+              title="অ্যাডমিন প্যানেল"
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-              <span>অ্যাডমিন</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+              <span className="sr-only md:not-sr-only">অ্যাডমিন</span>
             </Link>
           </nav>
 
@@ -148,14 +149,20 @@ export default function Navbar() {
             </Link>
           </div>
 
-          <Link
-            href="/admin"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-slate-600 font-medium rounded-lg hover:bg-slate-50 text-xs"
-          >
-            <ShieldCheck className="w-4 h-4 text-amber-600" />
-            <span>অ্যাডমিন পরিচালনা</span>
-          </Link>
+          <details className="group">
+            <summary className="flex items-center gap-2 px-3 py-2 text-slate-500 font-medium rounded-lg hover:bg-slate-50 text-xs cursor-pointer list-none">
+              <ShieldCheck className="w-4 h-4 text-amber-500" />
+              <span>অ্যাডমিন প্যানেল</span>
+              <span className="ml-auto text-slate-400 text-[10px]">▾</span>
+            </summary>
+            <Link
+              href="/admin"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-2 px-6 py-2 text-slate-600 font-medium rounded-lg hover:bg-slate-50 text-xs"
+            >
+              পরিচালনা প্যানেল দেখুন
+            </Link>
+          </details>
 
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 px-3">
             <span>সহায়তা হেল্পলাইন:</span>

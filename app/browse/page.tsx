@@ -225,7 +225,7 @@ export default function BrowsePage() {
 
               {/* বিভাগ */}
               <div>
-                <span className="text-[11px] text-slate-500 block mb-1">বিভাগ</span>
+              <span className="text-xs text-slate-600 font-medium block mb-1">বিভাগ</span>
                 <select
                   value={selectedDivision || ''}
                   onChange={(e) => {
@@ -244,7 +244,7 @@ export default function BrowsePage() {
 
               {/* জেলা */}
               <div>
-                <span className="text-[11px] text-slate-500 block mb-1">জেলা</span>
+              <span className="text-xs text-slate-600 font-medium block mb-1">জেলা</span>
                 <select
                   value={selectedDistrict || ''}
                   onChange={(e) => {
@@ -263,7 +263,7 @@ export default function BrowsePage() {
               {/* উপজেলা */}
               {selectedDistrict && (
                 <div>
-                  <span className="text-[11px] text-slate-500 block mb-1">উপজেলা</span>
+                  <span className="text-xs text-slate-600 font-medium block mb-1">উপজেলা</span>
                   <select
                     value={selectedUpazila || ''}
                     onChange={(e) => setSelectedUpazila(e.target.value ? Number(e.target.value) : null)}
@@ -322,8 +322,8 @@ export default function BrowsePage() {
                 )}
                 {selectedDistrict && (
                   <span className="text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full flex items-center gap-1 font-medium">
-                    জেলা #{selectedDistrict}
-                    <button onClick={() => setSelectedDistrict(null)}><X className="w-3 h-3" /></button>
+                    {availableDistricts.find((d) => d.id === selectedDistrict)?.nameBn ?? `জেলা #${selectedDistrict}`}
+                    <button onClick={() => { setSelectedDistrict(null); setSelectedUpazila(null); }} aria-label="জেলা ফিল্টার মুছুন"><X className="w-3 h-3" /></button>
                   </span>
                 )}
                 {selectedStatus !== 'all' && (

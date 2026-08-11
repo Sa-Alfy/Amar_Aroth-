@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, MEASUREMENT_UNITS, BANGLADESH_LOCATIONS, INITIAL_LISTINGS, SupplyListing, Category, MeasurementUnit, LocationDivision } from '@/lib/mockData';
 import { getCategories, getMeasurementUnits, getLocations, createSupplyListing, isSupabaseConfigured } from '@/lib/api/listings';
-import { PlusCircle, Sparkles, CheckCircle2, ArrowRight, Upload, Image as ImageIcon, MapPin, Tag, Package, Info } from 'lucide-react';
+import { getStoredUser, UserProfile } from '@/lib/api/auth';
+import { PlusCircle, Sparkles, CheckCircle2, ArrowRight, Upload, Image as ImageIcon, MapPin, Tag, Package, Info, Lock, Clock, ShieldAlert } from 'lucide-react';
 
 export default function PostSupplyPage() {
   const router = useRouter();
@@ -32,9 +33,17 @@ export default function PostSupplyPage() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
 
-  // Load dynamic form options from Supabase on mount
+  // Load dynamic form options from Supabase on mount & load user
   useEffect(() => {
+    const user = getStoredUser();
+    setCurrentUser(user);
+    if (user) {
+      if (user.fullName) setSellerName(user.fullName);
+      if (user.phone) setSellerPhone(user.phone);
+    }
+
     getCategories().then((data) => {
       setCategories(data);
       if (data.length > 0) setCategoryId(data[0].id);
@@ -149,7 +158,54 @@ export default function PostSupplyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
+    <div className="min-h-screen bg-slate-50 py-10 relative">
+      {/* ─── KYC GATE LOCK OVERLAY FOR UNVERIFIED USERS ─── */}
+      {currentUser && currentUser.kycStatus !== 'verified' && (
+        <div className="fixed inset-0 z-40 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-5 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <Lock className="w-8 h-8" />
+            </div>
+            <div>
+              <span className="inline-block bg-amber-100 text-amber-800 font-bold text-xs px-3 py-1 rounded-full mb-2">
+                ⏳ এনআইডি (KYC) যাচাই প্রক্রিয়াধীন
+              </span>
+              <h2 className="text-xl font-black text-slate-900">পণ্য পোস্ট বন্ধ রয়েছে</h2>
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                আপনার এনআইডি ({currentUser.nidNumber || 'NID'}) অনুমোদন প্রক্রিয়াধীন রয়েছে। আগামী <strong>২৪ ঘণ্টার মধ্যে</strong> ভেরিফিকেশন সম্পন্ন হলে আপনি সরাসরি পণ্য পোস্ট করতে পারবেন।
+              </p>
+            </div>
+
+            <div className="bg-slate-50 rounded-2xl p-4 text-left space-y-2 border border-slate-200 text-xs">
+              <div className="flex items-center gap-2 text-emerald-700 font-bold">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>আপনি সমস্ত পণ্যের পোস্ট ও বাজার দর দেখতে পারবেন</span>
+              </div>
+              <div className="flex items-center gap-2 text-amber-700 font-bold">
+                <Clock className="w-4 h-4 shrink-0" />
+                <span>অনুমোদনের পর আনলিমিটেড পোস্ট করার সুবিধা পাবেন</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              <button
+                onClick={() => router.push('/browse')}
+                className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-2xl text-sm shadow-lg shadow-brand-600/30 transition-all flex items-center justify-center gap-2"
+              >
+                <span>🌾 পণ্যের বাজারে ফিরে যান (Browse)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => router.push('/login')}
+                className="text-xs font-bold text-slate-500 hover:text-slate-800 py-2"
+              >
+                অন্য একাউন্টে লগইন করুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         
         {/* Header */}

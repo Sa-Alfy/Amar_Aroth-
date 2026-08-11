@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Image from 'next/image';
@@ -15,15 +15,15 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
   const getStatusBadge = (status: SupplyListing['status']) => {
     switch (status) {
       case 'active':
-        return <span className="bg-emerald-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">সচল</span>;
+        return <span className="bg-emerald-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm tracking-wide">🟢 সচল</span>;
       case 'negotiating':
-        return <span className="bg-amber-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">আলোচনাধীন</span>;
+        return <span className="bg-amber-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm tracking-wide">🟡 আলোচনাধীন</span>;
       case 'reserved':
-        return <span className="bg-purple-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">সংরক্ষিত</span>;
+        return <span className="bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm tracking-wide">🔵 সংরক্ষিত</span>;
       case 'sold':
-        return <span className="bg-slate-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">বিক্রিত</span>;
+        return <span className="bg-slate-700 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm tracking-wide">⚫ বিক্রিত</span>;
       default:
-        return <span className="bg-slate-400 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">{status}</span>;
+        return <span className="bg-slate-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">{status}</span>;
     }
   };
 
@@ -48,6 +48,12 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
           src={listing.images[0] || 'https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&w=800&q=80'}
           alt={listing.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            const target = e.currentTarget as HTMLImageElement;
+            target.onerror = null;
+            target.src = 'https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&w=800&q=80';
+          }}
+          loading="lazy"
         />
         
         {/* উপরের ব্যাজ */}
@@ -69,15 +75,15 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
       <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
         <div>
           {/* বিক্রেতার তথ্য */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1.5">
-            <span className="font-medium text-slate-700">{listing.sellerName}</span>
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 mb-1.5">
+            <span className="font-semibold text-slate-800">{listing.sellerName}</span>
             {listing.isSellerVerified && (
-              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-full border border-emerald-300">
                 <CheckCircle2 className="w-3 h-3" />
                 যাচাইকৃত
               </span>
             )}
-            <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded ml-auto">
+            <span className="text-xs bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-medium ml-auto">
               {getSellerTypeLabel(listing.sellerType)}
             </span>
           </div>
@@ -97,17 +103,17 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
         {/* মূল্য ও পরিমাণ */}
         <div className="bg-brand-50/60 p-4 rounded-xl border border-brand-100 flex items-center justify-between">
           <div>
-            <span className="text-[10px] text-slate-500 block uppercase font-medium tracking-wide">পরিমাণ</span>
+            <span className="text-xs text-slate-600 block uppercase font-semibold tracking-wide mb-0.5">পরিমাণ</span>
             <span className="text-lg font-black text-slate-900">
               {listing.quantity.toLocaleString('bn-BD')} {listing.unitSymbolBn}
             </span>
           </div>
           
           <div className="text-right">
-            <span className="text-[10px] text-slate-500 block uppercase font-medium tracking-wide">প্রতি ইউনিট দর</span>
+            <span className="text-xs text-slate-600 block uppercase font-semibold tracking-wide mb-0.5">প্রতি ইউনিট দর</span>
             <span className="text-xl font-black text-brand-700">
               ৳{listing.expectedPricePerUnit.toLocaleString('bn-BD')}
-              <span className="text-xs font-normal text-slate-600"> /{listing.unitSymbolBn}</span>
+              <span className="text-xs font-medium text-slate-700"> /{listing.unitSymbolBn}</span>
             </span>
           </div>
         </div>
