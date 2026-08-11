@@ -1,38 +1,55 @@
-# Amar Aroth (আমার আড়ত) - Agricultural Supply Index Bangladesh
+# Amar Aroth (আমার আড়ত) - Agricultural Supply Index & Economy Security Platform
 
-[![Build & Deploy to GitHub Pages](https://github.com/Sa-Alfy/Amar_Aroth-/actions/workflows/deploy.yml/badge.svg)](https://github.com/Sa-Alfy/Amar_Aroth-/actions/workflows/deploy.yml)
+[![Build & Deploy](https://github.com/Sa-Alfy/Amar_Aroth-/actions/workflows/deploy.yml/badge.svg)](https://github.com/Sa-Alfy/Amar_Aroth-/actions/workflows/deploy.yml)
 
 **Amar Aroth** is a digital **Agricultural Supply Index & Discovery Infrastructure** designed specifically for Bangladesh. It creates real-time, transparent visibility between rural producers (farmers, aggregators, cooperatives) and wholesale buyers (dealers/*Aratdars*).
 
-Instead of acting as a traditional transactional e-commerce store with checkout bloat, Amar Aroth serves as an **indexed inventory discovery engine**—enabling dealers to locate crops by district, upazila, quantity, and price, and connect directly via mobile phone call.
+Instead of acting as a traditional transactional e-commerce store with checkout bloat, Amar Aroth serves as a **secure, indexed inventory discovery engine**—enabling dealers to locate crops by division, district, upazila, quantity, and price, and connect directly via rate-limited mobile phone reveals.
 
 ---
 
 ## 🌟 Key Features
 
-* 🚀 **Instant-Publish Supply Creator:** Farmers post crop yield details with photos in under 2 minutes. Listings go **Live immediately** without waiting for approval queues.
-* 🔎 **Multi-Parametric Search Index:** Filter live crop inventory by Category (Potato 🥔, Egg 🥚, Fish 🐟, Rice 🌾, Vegetables 🥦, Livestock 🐄), Bangladesh Division $\rightarrow$ District $\rightarrow$ Upazila hierarchy, and Price/Quantity ranges.
-* 📞 **Direct Voice Lead Reveal:** Tap-to-Call modal reveals verified seller phone numbers for direct offline negotiation, payment, and transport settlement.
-* 📊 **Stock Lifecycle Manager:** Farmers toggle listing states between `Live (সচল)`, `Negotiating (আলোচনাধীন)`, `Reserved (সংরক্ষিত)`, and `Sold Out (বিক্রিত)` with live view and phone reveal counters.
-* 🛡️ **Reactive Moderation Queue:** Post-publishing user flagging queue enabling admins to hide inaccurate or sold-out listings with 1 click.
+* 🌾 **Instant Supply Creator:** Farmers post crop yield details with photos in under 2 minutes with automatic district/upazila geographic tagging.
+* 🔎 **Multi-Parametric Search Index:** Filter live crop inventory by Category (Potato 🥔, Egg 🥚, Fish 🐟, Rice 🌾, Vegetables 🥦, Livestock 🐄), Bangladesh Location Hierarchy (Division $\rightarrow$ District $\rightarrow$ Upazila), and Price/Quantity ranges.
+* 🛡️ **Database Security & Fraud Engine:** Automatic price band enforcement (+100% / -50% outlier detection), risk scoring, IP/device footprint audit trails, and automatic hold triggers for suspicious listings.
+* 📞 **Rate-Limited Phone Reveal:** Server-enforced rate limits (10/day retail, 25/day commercial, 5/hour per IP) preventing phone scraping and agent harvesting.
+* 📊 **Stock Lifecycle Manager:** Farmers toggle listing states between `Live (সচল)`, `Negotiating (আলোচনাধীন)`, `Reserved (সংরক্ষিত)`, and `Sold Out (বিক্রিত)` with live view counters.
+* ⚖️ **Admin Moderation Dashboard:** Real-time alert feed for price anomalies, phone scraping attempts, and user KYC verification.
+
+---
+
+## 🏗️ Backend & Security Architecture
+
+Amar Aroth uses a **Backend-First Architecture** where the browser **never directly accesses the database**:
+
+```
+Browser Frontend → fetch('/api/...') → Next.js Server API Route → PostgreSQL (Supabase)
+```
+
+1. **Server-Side API Layer (`app/api/`)**: All authentication, listings, locations, categories, units, and moderation actions are processed through server API routes with session cookie verification.
+2. **Client Fetch Abstraction (`lib/client/api.ts`)**: Single unified interface for all frontend data calls, eliminating browser-side database SDK exposure.
+3. **Database Security (PL/pgSQL & RLS)**: Business logic, rate limits, and fraud control live in PostgreSQL triggers (`trg_check_price_band_and_verification`) and `SECURITY DEFINER` stored procedures (`reveal_seller_phone_number`).
 
 ---
 
 ## 🛠️ Technology Stack
 
-* **Frontend:** Next.js 14+ (App Router, TypeScript)
-* **Styling:** TailwindCSS + Custom Bangladeshi Brand Palette
+* **Frontend:** Next.js 16 (App Router, TypeScript)
+* **Backend:** Next.js Server API Routes + Node.js
+* **Database:** PostgreSQL via Supabase (Row Level Security, Custom Triggers, Stored Procedures)
+* **Styling:** Tailwind CSS + Custom Bangladeshi Agricultural Palette
 * **Icons:** Lucide React
-* **Deployment:** GitHub Pages (Static Export) & Vercel
 * **Repository:** [https://github.com/Sa-Alfy/Amar_Aroth-.git](https://github.com/Sa-Alfy/Amar_Aroth-.git)
 
 ---
 
 ## 🌿 Branching Strategy
 
-1. **`main`**: Production deployment branch hosted automatically on GitHub Pages.
-2. **`development`**: Active feature development & integration branch.
-3. **`dev`**: Secondary development and testing deployment branch.
+The repository follows a clean, 2-branch model:
+
+* **`main`**: Production-ready code and release deployments.
+* **`dev`**: Active development and integration testing.
 
 ---
 
@@ -54,15 +71,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 📦 Static Export Build
+## 📦 Build Verification
 
-To generate the static bundle for deployment:
+To verify production compilation and TypeScript checks:
 
 ```bash
 npm run build
 ```
-
-The output will be placed in the `/out` directory ready for GitHub Pages hosting.
 
 ---
 
