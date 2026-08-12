@@ -168,14 +168,18 @@ export async function PATCH(request: NextRequest) {
         if (!listingId) {
           return NextResponse.json({ success: false, error: 'Missing listingId.' }, { status: 400 });
         }
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('listings')
           .update({ status: 'active', updated_at: new Date().toISOString() })
           .eq('id', listingId)
-          .in('status', ['flagged_review', 'suspended']);
+          .in('status', ['flagged_review', 'suspended'])
+          .select('id');
 
         if (error) {
           return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        }
+        if (!data || data.length === 0) {
+          return NextResponse.json({ success: false, error: 'No matching flagged listing was updated.' }, { status: 404 });
         }
         return NextResponse.json({ success: true, message: 'Listing approved and set to active.' });
       }
@@ -185,13 +189,17 @@ export async function PATCH(request: NextRequest) {
         if (!listingId) {
           return NextResponse.json({ success: false, error: 'Missing listingId.' }, { status: 400 });
         }
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('listings')
           .update({ status: 'rejected', updated_at: new Date().toISOString() })
-          .eq('id', listingId);
+          .eq('id', listingId)
+          .select('id');
 
         if (error) {
           return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        }
+        if (!data || data.length === 0) {
+          return NextResponse.json({ success: false, error: 'No matching listing was updated.' }, { status: 404 });
         }
         return NextResponse.json({ success: true, message: 'Listing rejected.' });
       }
@@ -201,13 +209,17 @@ export async function PATCH(request: NextRequest) {
         if (!alertId) {
           return NextResponse.json({ success: false, error: 'Missing alertId.' }, { status: 400 });
         }
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('fraud_alerts')
           .update({ status: 'dismissed' })
-          .eq('id', alertId);
+          .eq('id', alertId)
+          .select('id');
 
         if (error) {
           return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        }
+        if (!data || data.length === 0) {
+          return NextResponse.json({ success: false, error: 'No matching alert was updated.' }, { status: 404 });
         }
         return NextResponse.json({ success: true, message: 'Alert dismissed.' });
       }
@@ -217,13 +229,17 @@ export async function PATCH(request: NextRequest) {
         if (!alertId) {
           return NextResponse.json({ success: false, error: 'Missing alertId.' }, { status: 400 });
         }
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('fraud_alerts')
           .update({ status: 'actioned' })
-          .eq('id', alertId);
+          .eq('id', alertId)
+          .select('id');
 
         if (error) {
           return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        }
+        if (!data || data.length === 0) {
+          return NextResponse.json({ success: false, error: 'No matching alert was updated.' }, { status: 404 });
         }
         return NextResponse.json({ success: true, message: 'Alert marked as actioned.' });
       }
@@ -233,13 +249,17 @@ export async function PATCH(request: NextRequest) {
         if (!userId || typeof riskScore !== 'number' || riskScore < 0) {
           return NextResponse.json({ success: false, error: 'Missing userId or invalid riskScore.' }, { status: 400 });
         }
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .update({ risk_score: riskScore })
-          .eq('id', userId);
+          .eq('id', userId)
+          .select('id');
 
         if (error) {
           return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        }
+        if (!data || data.length === 0) {
+          return NextResponse.json({ success: false, error: 'No matching profile was updated.' }, { status: 404 });
         }
         return NextResponse.json({ success: true, message: `Risk score updated to ${riskScore}.` });
       }

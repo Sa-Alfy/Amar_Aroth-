@@ -48,7 +48,7 @@ export interface SupplyListing {
   createdByUserId: string;
   ownerUserId: string;
   sellerName: string;
-  sellerPhone: string;
+  sellerPhone?: string;
   isSellerVerified: boolean;
   sellerType: 'farmer' | 'aggregator' | 'cooperative';
   categoryId: number;

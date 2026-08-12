@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SupplyListing } from '@/lib/mockData';
 import { revealPhone } from '@/lib/client/api';
 import { X, PhoneCall, CheckCircle2, MapPin, Package, Tag, ShieldCheck } from 'lucide-react';
@@ -11,10 +11,52 @@ interface ContactModalProps {
 }
 
 export default function ContactModal({ listing, onClose }: ContactModalProps) {
+  const [revealed, setRevealed] = useState<{ phone?: string; sellerName?: string; isVerified?: boolean } | null>(null);
+  const [revealState, setRevealState] = useState<'loading' | 'success' | 'error'>('loading');
+  const [revealError, setRevealError] = useState<string | null>(null);
+
   useEffect(() => {
-    if (listing?.id) {
-      revealPhone(String(listing.id));
+    let isCancelled = false;
+
+    async function fetchReveal() {
+      if (!listing?.id) {
+        setRevealed(null);
+        setRevealError(null);
+        setRevealState('loading');
+        return;
+      }
+
+      setRevealState('loading');
+      setRevealError(null);
+      setRevealed(null);
+
+      try {
+        const result = await revealPhone(String(listing.id));
+        if (isCancelled) return;
+
+        if (result.success && result.phone) {
+          setRevealed({
+            phone: result.phone,
+            sellerName: result.sellerName ?? listing.sellerName,
+            isVerified: result.isVerified ?? listing.isSellerVerified,
+          });
+          setRevealState('success');
+          return;
+        }
+
+        setRevealError(result.error || 'Unable to reveal seller phone number.');
+        setRevealState('error');
+      } catch (error: any) {
+        if (isCancelled) return;
+        setRevealError(error?.message || 'Unable to reveal seller phone number.');
+        setRevealState('error');
+      }
     }
+
+    fetchReveal();
+    return () => {
+      isCancelled = true;
+    };
   }, [listing?.id]);
 
   if (!listing) return null;
@@ -22,8 +64,6 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative overflow-hidden">
-        
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
@@ -31,18 +71,16 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
           <X className="w-5 h-5" />
         </button>
 
-        {/* Header Badge */}
         <div className="flex items-center gap-2 text-xs font-semibold text-brand-700 bg-brand-50 px-3 py-1.5 rounded-full w-fit mb-4 border border-brand-200">
           <ShieldCheck className="w-4 h-4 text-brand-600" />
           <span>সরাসরি যোগাযোগের নম্বর</span>
         </div>
 
-        {/* Seller Info Card */}
         <div className="space-y-4">
           <div>
             <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              {listing.sellerName}
-              {listing.isSellerVerified && (
+              {revealed?.sellerName ?? listing.sellerName}
+              {(revealed?.isVerified ?? listing.isSellerVerified) && (
                 <span title="Verified Producer">
                   <CheckCircle2 className="w-5 h-5 text-brand-600 fill-brand-100" />
                 </span>
@@ -55,12 +93,11 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
             </p>
           </div>
 
-          {/* Listing Specs Summary */}
           <div className="bg-slate-50 p-3.5 rounded-xl space-y-2 text-xs text-slate-700 border border-slate-200/80">
             <div className="font-semibold text-slate-900 text-sm line-clamp-1">
               {listing.title}
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/60">
               <div className="flex items-center gap-1.5">
                 <Package className="w-3.5 h-3.5 text-brand-600" />
@@ -78,22 +115,39 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
             </div>
           </div>
 
-          {/* Phone Call Call-To-Action */}
           <div className="pt-2 text-center space-y-3">
-            <div className="p-4 bg-slate-900 rounded-xl border border-slate-700">
+            <div className="p-4 bg-slate-900 rounded-xl border border-slate-700 min-h-[88px] flex flex-col items-center justify-center">
               <span className="text-xs text-slate-400 block mb-1.5 uppercase font-semibold tracking-wider">মোবাইল নম্বর</span>
-              <span className="text-2xl font-black text-white tracking-widest font-mono">
-                {listing.sellerPhone}
-              </span>
+
+              {revealState === 'loading' && (
+                <span className="text-sm text-slate-300 animate-pulse">নম্বর যাচাই করা হচ্ছে...</span>
+              )}
+
+              {revealState === 'error' && (
+                <span className="text-sm text-red-300 text-center">{revealError}</span>
+              )}
+
+              {revealState === 'success' && revealed?.phone && (
+                <span className="text-2xl font-black text-white tracking-widest font-mono">
+                  {revealed.phone}
+                </span>
+              )}
             </div>
 
-            <a
-              href={`tel:${listing.sellerPhone}`}
-              className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white py-4 px-4 rounded-xl font-bold text-base shadow-lg shadow-emerald-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[48px]"
-            >
-              <PhoneCall className="w-5 h-5 animate-pulse" />
-              <span>এখনই কল দিন</span>
-            </a>
+            {revealState === 'success' && revealed?.phone ? (
+              <a
+                href={`tel:${revealed.phone}`}
+                className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white py-4 px-4 rounded-xl font-bold text-base shadow-lg shadow-emerald-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[48px]"
+              >
+                <PhoneCall className="w-5 h-5 animate-pulse" />
+                <span>এখনই কল দিন</span>
+              </a>
+            ) : (
+              <div className="w-full flex items-center justify-center gap-2 bg-slate-200 text-slate-500 py-4 px-4 rounded-xl font-bold text-base min-h-[48px]">
+                <PhoneCall className="w-5 h-5" />
+                <span>{revealState === 'loading' ? 'নম্বর লোড হচ্ছে' : 'নম্বর উপলব্ধ নয়'}</span>
+              </div>
+            )}
 
             <p className="text-[11px] text-slate-400">
               দাম, পরিবহন সুবিধা এবং মূল্য পরিশোধের শর্ত সরাসরি কৃষকের সাথে ফোনে আলোচনা করুন।

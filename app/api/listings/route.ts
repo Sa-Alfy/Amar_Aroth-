@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         divisions (name_en, name_bn),
         districts (name_en, name_bn),
         upazilas (name_en, name_bn),
-        profiles!seller_id (full_name, phone, user_type, is_verified),
+        profiles!seller_id (full_name, user_type, is_verified),
         listing_images (image_url, sort_order)
       `)
       .in('status', ['active', 'negotiating', 'reserved', 'sold'])
@@ -91,7 +91,6 @@ export async function GET(request: NextRequest) {
       upazilaNameEn: row.upazilas?.name_en || 'Upazila',
       upazilaNameBn: row.upazilas?.name_bn || 'উপজেলা',
       sellerName: row.profiles?.full_name || 'Farmer',
-      sellerPhone: row.profiles?.phone || '01700000000',
       sellerType: (row.profiles?.user_type as any) || 'farmer',
       isSellerVerified: Boolean(row.profiles?.is_verified),
       images: row.listing_images?.length > 0
