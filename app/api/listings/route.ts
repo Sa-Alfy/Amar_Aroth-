@@ -42,6 +42,47 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = await createClient();
+
+    const buildListingsResponse = (rows: any[] = []) =>
+      rows.map((row: any) => {
+        const sellerProfile = row.profiles_public || row.profiles || null;
+        return {
+          id: row.id,
+          createdByUserId: row.created_by_user_id || row.seller_id,
+          ownerUserId: row.seller_id,
+          title: row.title,
+          description: row.description || '',
+          categoryId: row.category_id,
+          categoryNameEn: row.categories?.name_en || 'General',
+          categoryNameBn: row.categories?.name_bn || 'সাধারণ',
+          quantity: Number(row.quantity),
+          unitId: row.unit_id,
+          unitSymbol: row.measurement_units?.symbol_en || 'kg',
+          unitSymbolBn: row.measurement_units?.symbol_bn || 'কেজি',
+          expectedPricePerUnit: Number(row.expected_price),
+          currency: 'BDT',
+          divisionId: row.division_id,
+          divisionNameEn: row.divisions?.name_en || 'Division',
+          districtId: row.district_id,
+          districtNameEn: row.districts?.name_en || 'District',
+          districtNameBn: row.districts?.name_bn || 'জেলা',
+          upazilaId: row.upazila_id,
+          upazilaNameEn: row.upazilas?.name_en || 'Upazila',
+          upazilaNameBn: row.upazilas?.name_bn || 'উপজেলা',
+          sellerName: sellerProfile?.full_name || 'Farmer',
+          sellerType: (sellerProfile?.user_type as any) || 'farmer',
+          isSellerVerified: Boolean(sellerProfile?.is_verified),
+          images: row.listing_images?.length > 0
+            ? row.listing_images.sort((a: any, b: any) => a.sort_order - b.sort_order).map((i: any) => i.image_url)
+            : ['https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&w=800&q=80'],
+          status: row.status,
+          availableFrom: row.available_from || new Date().toISOString().split('T')[0],
+          createdAt: row.created_at,
+          viewCount: row.view_count || 0,
+          contactCount: row.phone_reveal_count || 0,
+        };
+      });
+
     let query = supabase
       .from('listings')
       .select(`
@@ -51,7 +92,7 @@ export async function GET(request: NextRequest) {
         divisions (name_en, name_bn),
         districts (name_en, name_bn),
         upazilas (name_en, name_bn),
-        profiles!seller_id (full_name, user_type, is_verified),
+        profiles_public!seller_id (full_name, user_type, is_verified),
         listing_images (image_url, sort_order)
       `)
       .in('status', ['active', 'negotiating', 'reserved', 'sold'])
@@ -62,46 +103,85 @@ export async function GET(request: NextRequest) {
     if (search) query = query.ilike('title', `%${search}%`);
 
     const { data, error } = await query;
-    if (error || !data) {
-      console.warn('[api/listings] Query failed:', error?.message);
+    if (!error && data) {
+      return NextResponse.json({ success: true, listings: buildListingsResponse(data) });
+    }
+
+    console.warn('[api/listings] Embedded profiles_public query failed, using fallback:', error?.message || 'Unknown error');
+
+    const { data: listingRows, error: listingError } = await supabase
+      .from('listings')
+      .select(`
+        *,
+        categories (name_en, name_bn),
+        measurement_units (symbol_en, symbol_bn),
+        divisions (name_en, name_bn),
+        districts (name_en, name_bn),
+        upazilas (name_en, name_bn),
+        listing_images (image_url, sort_order)
+      `)
+      .in('status', ['active', 'negotiating', 'reserved', 'sold'])
+      .order('created_at', { ascending: false });
+
+    if (listingError || !listingRows) {
+      console.warn('[api/listings] Fallback listing query failed:', listingError?.message);
       return NextResponse.json({ success: true, listings: INITIAL_LISTINGS });
     }
 
-    const listings = data.map((row: any) => ({
-      id: row.id,
-      createdByUserId: row.created_by_user_id || row.seller_id,
-      ownerUserId: row.seller_id,
-      title: row.title,
-      description: row.description || '',
-      categoryId: row.category_id,
-      categoryNameEn: row.categories?.name_en || 'General',
-      categoryNameBn: row.categories?.name_bn || 'সাধারণ',
-      quantity: Number(row.quantity),
-      unitId: row.unit_id,
-      unitSymbol: row.measurement_units?.symbol_en || 'kg',
-      unitSymbolBn: row.measurement_units?.symbol_bn || 'কেজি',
-      expectedPricePerUnit: Number(row.expected_price),
-      currency: 'BDT',
-      divisionId: row.division_id,
-      divisionNameEn: row.divisions?.name_en || 'Division',
-      districtId: row.district_id,
-      districtNameEn: row.districts?.name_en || 'District',
-      districtNameBn: row.districts?.name_bn || 'জেলা',
-      upazilaId: row.upazila_id,
-      upazilaNameEn: row.upazilas?.name_en || 'Upazila',
-      upazilaNameBn: row.upazilas?.name_bn || 'উপজেলা',
-      sellerName: row.profiles?.full_name || 'Farmer',
-      sellerType: (row.profiles?.user_type as any) || 'farmer',
-      isSellerVerified: Boolean(row.profiles?.is_verified),
-      images: row.listing_images?.length > 0
-        ? row.listing_images.sort((a: any, b: any) => a.sort_order - b.sort_order).map((i: any) => i.image_url)
-        : ['https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&w=800&q=80'],
-      status: row.status,
-      availableFrom: row.available_from || new Date().toISOString().split('T')[0],
-      createdAt: row.created_at,
-      viewCount: row.view_count || 0,
-      contactCount: row.phone_reveal_count || 0,
-    }));
+    const sellerIds = [...new Set(listingRows.map((row: any) => row.seller_id).filter(Boolean))];
+    let sellerProfiles: Record<string, any> = {};
+
+    if (sellerIds.length > 0) {
+      const { data: publicProfiles, error: publicProfilesError } = await supabase
+        .from('profiles_public')
+        .select('id, full_name, user_type, is_verified')
+        .in('id', sellerIds);
+
+      if (!publicProfilesError && publicProfiles) {
+        for (const profile of publicProfiles) {
+          sellerProfiles[profile.id] = profile;
+        }
+      }
+    }
+
+    const listings = listingRows.map((row: any) => {
+      const sellerProfile = sellerProfiles[row.seller_id] || null;
+      return {
+        id: row.id,
+        createdByUserId: row.created_by_user_id || row.seller_id,
+        ownerUserId: row.seller_id,
+        title: row.title,
+        description: row.description || '',
+        categoryId: row.category_id,
+        categoryNameEn: row.categories?.name_en || 'General',
+        categoryNameBn: row.categories?.name_bn || 'সাধারণ',
+        quantity: Number(row.quantity),
+        unitId: row.unit_id,
+        unitSymbol: row.measurement_units?.symbol_en || 'kg',
+        unitSymbolBn: row.measurement_units?.symbol_bn || 'কেজি',
+        expectedPricePerUnit: Number(row.expected_price),
+        currency: 'BDT',
+        divisionId: row.division_id,
+        divisionNameEn: row.divisions?.name_en || 'Division',
+        districtId: row.district_id,
+        districtNameEn: row.districts?.name_en || 'District',
+        districtNameBn: row.districts?.name_bn || 'জেলা',
+        upazilaId: row.upazila_id,
+        upazilaNameEn: row.upazilas?.name_en || 'Upazila',
+        upazilaNameBn: row.upazilas?.name_bn || 'উপজেলা',
+        sellerName: sellerProfile?.full_name || 'Farmer',
+        sellerType: (sellerProfile?.user_type as any) || 'farmer',
+        isSellerVerified: Boolean(sellerProfile?.is_verified),
+        images: row.listing_images?.length > 0
+          ? row.listing_images.sort((a: any, b: any) => a.sort_order - b.sort_order).map((i: any) => i.image_url)
+          : ['https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&w=800&q=80'],
+        status: row.status,
+        availableFrom: row.available_from || new Date().toISOString().split('T')[0],
+        createdAt: row.created_at,
+        viewCount: row.view_count || 0,
+        contactCount: row.phone_reveal_count || 0,
+      };
+    });
 
     return NextResponse.json({ success: true, listings });
   } catch (err: any) {
