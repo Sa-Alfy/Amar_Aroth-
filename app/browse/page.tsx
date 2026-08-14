@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CATEGORIES, BANGLADESH_LOCATIONS, SupplyListing, ListingStatus, Category, LocationDivision } from '@/lib/mockData';
 import { fetchListings, fetchCategories, fetchLocations } from '@/lib/client/api';
@@ -8,7 +8,7 @@ import ListingCard from '@/components/ListingCard';
 import ContactModal from '@/components/ContactModal';
 import { Search, Filter, RefreshCw, SlidersHorizontal, MapPin, Check, X } from 'lucide-react';
 
-export default function BrowsePage() {
+function BrowseContent() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get('q') ?? '';
   const initialDistrict = searchParams.get('district');
@@ -486,5 +486,13 @@ export default function BrowsePage() {
         onClose={() => setActiveContactListing(null)}
       />
     </div>
+  );
+}
+
+export default function BrowsePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50" />}>
+      <BrowseContent />
+    </Suspense>
   );
 }
