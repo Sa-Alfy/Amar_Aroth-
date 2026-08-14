@@ -1,17 +1,24 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { CATEGORIES, MEASUREMENT_UNITS, BANGLADESH_LOCATIONS, INITIAL_LISTINGS, SupplyListing, ListingStatus, Category, LocationDivision } from '@/lib/mockData';
+import { useSearchParams } from 'next/navigation';
+import { CATEGORIES, BANGLADESH_LOCATIONS, SupplyListing, ListingStatus, Category, LocationDivision } from '@/lib/mockData';
 import { fetchListings, fetchCategories, fetchLocations } from '@/lib/client/api';
 import ListingCard from '@/components/ListingCard';
 import ContactModal from '@/components/ContactModal';
-import { Search, Filter, RefreshCw, SlidersHorizontal, MapPin, Tag, Package, Check, X } from 'lucide-react';
+import { Search, Filter, RefreshCw, SlidersHorizontal, MapPin, Check, X } from 'lucide-react';
 
 export default function BrowsePage() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get('q') ?? '';
+  const initialDistrict = searchParams.get('district');
+
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedDivision, setSelectedDivision] = useState<number | null>(null);
-  const [selectedDistrict, setSelectedDistrict] = useState<number | null>(null);
+  const [selectedDistrict, setSelectedDistrict] = useState<number | null>(
+    initialDistrict ? Number(initialDistrict) : null
+  );
   const [selectedUpazila, setSelectedUpazila] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<ListingStatus | 'all'>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'price_low' | 'price_high' | 'quantity_high'>('newest');
@@ -23,22 +30,32 @@ export default function BrowsePage() {
   const [activeContactListing, setActiveContactListing] = useState<SupplyListing | null>(null);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
+  useEffect(() => {
+    setSearchQuery(initialSearch);
+    const parsedDistrict = initialDistrict ? Number(initialDistrict) : null;
+    setSelectedDistrict(Number.isFinite(parsedDistrict) ? parsedDistrict : null);
+  }, [initialSearch, initialDistrict]);
+
   // Load reference data dynamically from backend API on mount
   useEffect(() => {
     fetchCategories().then((res) => { if (res && res.length > 0) setCategories(res); });
     fetchLocations().then((res) => { if (res && res.length > 0) setLocations(res); });
   }, []);
 
-  // Fetch listings from backend API when filters change
+  // Fetch listings from backend API when filters change.
   useEffect(() => {
-    setIsLoading(true);
-    fetchListings({
-      categoryId: selectedCategory,
-      districtId: selectedDistrict,
-      searchQuery: searchQuery,
-    })
-      .then(setListings)
-      .finally(() => setIsLoading(false));
+    const timer = setTimeout(() => {
+      setIsLoading(true);
+      fetchListings({
+        categoryId: selectedCategory,
+        districtId: selectedDistrict,
+        searchQuery,
+      })
+        .then(setListings)
+        .finally(() => setIsLoading(false));
+    }, 350);
+
+    return () => clearTimeout(timer);
   }, [selectedCategory, selectedDistrict, searchQuery]);
 
   // Available districts based on selected division
@@ -56,31 +73,12 @@ export default function BrowsePage() {
     return distObj ? distObj.upazilas : [];
   }, [selectedDistrict, locations]);
 
-  // Filter & Sort Logic
+  // Filter & Sort Logic (API handles search/category/district; client handles only non-API filters)
   const filteredListings = useMemo(() => {
     let result = [...listings];
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (item) =>
-          item.title.toLowerCase().includes(q) ||
-          item.description.toLowerCase().includes(q) ||
-          item.districtNameEn.toLowerCase().includes(q) ||
-          item.districtNameBn.includes(q)
-      );
-    }
-
-    if (selectedCategory) {
-      result = result.filter((item) => item.categoryId === selectedCategory);
-    }
-
     if (selectedDivision) {
       result = result.filter((item) => item.divisionId === selectedDivision);
-    }
-
-    if (selectedDistrict) {
-      result = result.filter((item) => item.districtId === selectedDistrict);
     }
 
     if (selectedUpazila) {
@@ -91,7 +89,6 @@ export default function BrowsePage() {
       result = result.filter((item) => item.status === selectedStatus);
     }
 
-    // Sort
     if (sortBy === 'newest') {
       result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } else if (sortBy === 'price_low') {
@@ -103,7 +100,7 @@ export default function BrowsePage() {
     }
 
     return result;
-  }, [searchQuery, selectedCategory, selectedDivision, selectedDistrict, selectedUpazila, selectedStatus, sortBy]);
+  }, [listings, selectedDivision, selectedUpazila, selectedStatus, sortBy]);
 
   const clearAllFilters = () => {
     setSearchQuery('');

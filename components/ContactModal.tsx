@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { SupplyListing } from '@/lib/mockData';
 import { revealPhone } from '@/lib/client/api';
 import { X, PhoneCall, CheckCircle2, MapPin, Package, Tag, ShieldCheck } from 'lucide-react';
@@ -12,52 +12,57 @@ interface ContactModalProps {
 
 export default function ContactModal({ listing, onClose }: ContactModalProps) {
   const [revealed, setRevealed] = useState<{ phone?: string; sellerName?: string; isVerified?: boolean } | null>(null);
-  const [revealState, setRevealState] = useState<'loading' | 'success' | 'error'>('loading');
+  const [revealState, setRevealState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [revealError, setRevealError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isCancelled = false;
+  const handleReveal = async () => {
+    if (!listing?.id) return;
 
-    async function fetchReveal() {
-      if (!listing?.id) {
-        setRevealed(null);
-        setRevealError(null);
-        setRevealState('loading');
+    setRevealState('loading');
+    setRevealError(null);
+
+    try {
+      const result = await revealPhone(String(listing.id));
+
+      if (result.success && result.phone) {
+        setRevealed({
+          phone: result.phone,
+          sellerName: result.sellerName ?? listing.sellerName,
+          isVerified: result.isVerified ?? listing.isSellerVerified,
+        });
+        setRevealState('success');
         return;
       }
 
-      setRevealState('loading');
-      setRevealError(null);
-      setRevealed(null);
-
-      try {
-        const result = await revealPhone(String(listing.id));
-        if (isCancelled) return;
-
-        if (result.success && result.phone) {
-          setRevealed({
-            phone: result.phone,
-            sellerName: result.sellerName ?? listing.sellerName,
-            isVerified: result.isVerified ?? listing.isSellerVerified,
-          });
-          setRevealState('success');
-          return;
+      const message = (() => {
+        const error = result.error || 'অভিযোগের নম্বর দেখাতে ব্যর্থ হয়েছে।';
+        if (error.includes('Authentication required') || error.includes('login') || error.includes('logged in')) {
+          return 'আপনাকে লগইন করতে হবে';
         }
+        if (error.includes('quota exceeded') || error.includes('quota') || error.includes('Too many') || error.includes('Daily')) {
+          return 'দৈনিক নম্বর দেখার সীমা শেষ হয়েছে';
+        }
+        return 'নম্বর দেখাতে ব্যর্থ হয়েছে';
+      })();
 
-        setRevealError(result.error || 'Unable to reveal seller phone number.');
-        setRevealState('error');
-      } catch (error: any) {
-        if (isCancelled) return;
-        setRevealError(error?.message || 'Unable to reveal seller phone number.');
-        setRevealState('error');
-      }
+      setRevealError(message);
+      setRevealState('error');
+    } catch (error: any) {
+      const message = (() => {
+        const fallback = error?.message || 'নম্বর দেখাতে ব্যর্থ হয়েছে';
+        if (fallback.includes('Authentication required') || fallback.includes('login') || fallback.includes('logged in')) {
+          return 'আপনাকে লগইন করতে হবে';
+        }
+        if (fallback.includes('quota exceeded') || fallback.includes('quota') || fallback.includes('Too many') || fallback.includes('Daily')) {
+          return 'দৈনিক নম্বর দেখার সীমা শেষ হয়েছে';
+        }
+        return 'নম্বর দেখাতে ব্যর্থ হয়েছে';
+      })();
+
+      setRevealError(message);
+      setRevealState('error');
     }
-
-    fetchReveal();
-    return () => {
-      isCancelled = true;
-    };
-  }, [listing?.id]);
+  };
 
   if (!listing) return null;
 
@@ -119,6 +124,10 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
             <div className="p-4 bg-slate-900 rounded-xl border border-slate-700 min-h-[88px] flex flex-col items-center justify-center">
               <span className="text-xs text-slate-400 block mb-1.5 uppercase font-semibold tracking-wider">মোবাইল নম্বর</span>
 
+              {revealState === 'idle' && (
+                <span className="text-sm text-slate-300">••••••••••</span>
+              )}
+
               {revealState === 'loading' && (
                 <span className="text-sm text-slate-300 animate-pulse">নম্বর যাচাই করা হচ্ছে...</span>
               )}
@@ -143,10 +152,15 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
                 <span>এখনই কল দিন</span>
               </a>
             ) : (
-              <div className="w-full flex items-center justify-center gap-2 bg-slate-200 text-slate-500 py-4 px-4 rounded-xl font-bold text-base min-h-[48px]">
+              <button
+                type="button"
+                onClick={handleReveal}
+                disabled={revealState === 'loading'}
+                className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 disabled:opacity-70 text-white py-4 px-4 rounded-xl font-bold text-base shadow-lg shadow-brand-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] min-h-[48px]"
+              >
                 <PhoneCall className="w-5 h-5" />
-                <span>{revealState === 'loading' ? 'নম্বর লোড হচ্ছে' : 'নম্বর উপলব্ধ নয়'}</span>
-              </div>
+                <span>{revealState === 'loading' ? 'লোড হচ্ছে...' : 'নম্বর দেখুন'}</span>
+              </button>
             )}
 
             <p className="text-[11px] text-slate-400">

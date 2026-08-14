@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         .select(`
           id, title, expected_price, status, created_at,
           category_id, upazila_id, district_id,
-          profiles!created_by_user_id (id, full_name, phone, user_type, risk_score, is_verified),
+          profiles!created_by_user_id (id, full_name, user_type, risk_score, is_verified),
           categories (name_en),
           districts (name_en),
           upazilas (name_en)
@@ -76,7 +76,6 @@ export async function GET(request: NextRequest) {
         seller: row.profiles ? {
           id: row.profiles.id,
           name: row.profiles.full_name,
-          phone: row.profiles.phone,
           userType: row.profiles.user_type,
           riskScore: row.profiles.risk_score,
           isVerified: row.profiles.is_verified,
@@ -84,7 +83,32 @@ export async function GET(request: NextRequest) {
       }));
     }
 
-    // 4. Fetch pending fraud alerts
+    // 4. Fetch pending KYC users
+    if (queryType === 'kyc' || queryType === 'all') {
+      const { data: kycUsers, error: kycError } = await supabase
+        .from('profiles')
+        .select('id, full_name, phone, user_type, nid_number, district_id, upazila_id, created_at')
+        .eq('is_verified', false)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (kycError) {
+        console.error('[moderation] KYC query error:', kycError.message);
+      }
+
+      result.kycUsers = (kycUsers || []).map((row: any) => ({
+        id: row.id,
+        fullName: row.full_name,
+        phone: row.phone,
+        userType: row.user_type,
+        nidNumber: row.nid_number ? `****${row.nid_number.slice(-4)}` : null,
+        districtId: row.district_id,
+        upazilaId: row.upazila_id,
+        createdAt: row.created_at,
+      }));
+    }
+
+    // 5. Fetch pending fraud alerts
     if (queryType === 'alerts' || queryType === 'all') {
       const { data: alerts, error: alertsError } = await supabase
         .from('fraud_alerts')
@@ -242,6 +266,46 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ success: false, error: 'No matching alert was updated.' }, { status: 404 });
         }
         return NextResponse.json({ success: true, message: 'Alert marked as actioned.' });
+      }
+
+      case 'verify_kyc': {
+        const { userId } = body;
+        if (!userId) {
+          return NextResponse.json({ success: false, error: 'Missing userId.' }, { status: 400 });
+        }
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({ is_verified: true, nid_verified: true })
+          .eq('id', userId)
+          .select('id');
+
+        if (error) {
+          return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        }
+        if (!data || data.length === 0) {
+          return NextResponse.json({ success: false, error: 'No matching profile was updated.' }, { status: 404 });
+        }
+        return NextResponse.json({ success: true, message: 'KYC verified.' });
+      }
+
+      case 'reject_kyc': {
+        const { userId } = body;
+        if (!userId) {
+          return NextResponse.json({ success: false, error: 'Missing userId.' }, { status: 400 });
+        }
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({ is_verified: false, nid_verified: false })
+          .eq('id', userId)
+          .select('id');
+
+        if (error) {
+          return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+        }
+        if (!data || data.length === 0) {
+          return NextResponse.json({ success: false, error: 'No matching profile was updated.' }, { status: 404 });
+        }
+        return NextResponse.json({ success: true, message: 'KYC rejected.' });
       }
 
       case 'adjust_risk': {

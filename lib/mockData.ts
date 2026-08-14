@@ -137,7 +137,7 @@ export const BANGLADESH_LOCATIONS: LocationDivision[] = [
       { id: 121, nameEn: 'Chandpur', nameBn: 'চাঁদপুর', upazilas: [{ id: 1027, nameEn: 'Hajiganj', nameBn: 'হাজীগঞ্জ' }] },
       { id: 122, nameEn: 'Khagrachhari', nameBn: 'খাগড়াছড়ি', upazilas: [{ id: 1028, nameEn: 'Dighinala', nameBn: 'দীঘিনালা' }] },
       { id: 123, nameEn: 'Rangamati', nameBn: 'রাঙ্গামাটি', upazilas: [{ id: 1029, nameEn: 'Kaptai', nameBn: 'কাপ্তাই' }] },
-      { id: 134, nameEn: 'Bandarban', nameBn: 'বান্দরবান', upazilas: [{ id: 1030, nameEn: 'Lama', nameBn: 'লামা' }] }
+      { id: 124, nameEn: 'Bandarban', nameBn: 'বান্দরবান', upazilas: [{ id: 1030, nameEn: 'Lama', nameBn: 'লামা' }] }
     ]
   },
   {

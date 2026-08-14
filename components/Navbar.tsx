@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Store, PlusCircle, Search, User, ShieldCheck, LogIn, UserPlus } from 'lucide-react';
-import { fetchCurrentUser, UserProfile } from '@/lib/client/api';
+import { Store, PlusCircle, Search, User, LogIn, UserPlus, LogOut } from 'lucide-react';
+import { fetchCurrentUser, logout, UserProfile } from '@/lib/client/api';
 
 export default function Navbar() {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -48,28 +48,32 @@ export default function Navbar() {
               <User className="w-4 h-4" />
               <span>আমার পোস্ট</span>
             </Link>
-
-            <Link
-              href="/admin"
-              className="text-slate-400 hover:text-slate-600 flex items-center gap-1 text-xs px-2 py-1 rounded-lg border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all opacity-60 hover:opacity-100"
-              title="অ্যাডমিন প্যানেল"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
-              <span>অ্যাডমিন</span>
-            </Link>
           </nav>
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
             {/* Desktop: Login / Register / User pill */}
             {currentUser ? (
-              <Link
-                href="/account"
-                className="hidden md:flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-2 rounded-xl"
-              >
-                <User className="w-4 h-4 text-emerald-600" />
-                <span className="max-w-[100px] truncate">{currentUser.fullName}</span>
-              </Link>
+              <>
+                <Link
+                  href="/account"
+                  className="hidden md:flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-2 rounded-xl"
+                >
+                  <User className="w-4 h-4 text-emerald-600" />
+                  <span className="max-w-[100px] truncate">{currentUser.fullName}</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await logout();
+                    setCurrentUser(null);
+                  }}
+                  className="hidden md:flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold px-3 py-2 rounded-xl transition-all"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>লগআউট</span>
+                </button>
+              </>
             ) : (
               <>
                 <Link

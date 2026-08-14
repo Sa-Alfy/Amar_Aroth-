@@ -157,42 +157,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* MARKETPLACE ACTIVITY STATS BANNER */}
-      <section className="bg-slate-900 border-y border-slate-800 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            <div className="text-center space-y-1">
-              <div className="flex items-center justify-center gap-2">
-                <BarChart3 className="w-5 h-5 text-brand-400" />
-                <span className="text-2xl sm:text-3xl font-black text-white">১২,৫০০+</span>
-              </div>
-              <p className="text-xs text-slate-400 font-medium">সচল পোস্ট</p>
-            </div>
-            <div className="text-center space-y-1">
-              <div className="flex items-center justify-center gap-2">
-                <Globe className="w-5 h-5 text-brand-400" />
-                <span className="text-2xl sm:text-3xl font-black text-white">৬৪</span>
-              </div>
-              <p className="text-xs text-slate-400 font-medium">জেলায় সেবা</p>
-            </div>
-            <div className="text-center space-y-1">
-              <div className="flex items-center justify-center gap-2">
-                <Users className="w-5 h-5 text-amber-400" />
-                <span className="text-2xl sm:text-3xl font-black text-white">১,২০০+</span>
-              </div>
-              <p className="text-xs text-slate-400 font-medium">নিবন্ধিত কৃষক</p>
-            </div>
-            <div className="text-center space-y-1">
-              <div className="flex items-center justify-center gap-2">
-                <Handshake className="w-5 h-5 text-amber-400" />
-                <span className="text-2xl sm:text-3xl font-black text-white">৩০০+</span>
-              </div>
-              <p className="text-xs text-slate-400 font-medium">ব্যবসায়ী ও পাইকার</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* FEATURED COMMODITIES CATEGORY TILES */}
       <section className="py-12 bg-slate-100 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -95,12 +95,30 @@ export interface RegisterPayload {
 export async function signup(
   payload: RegisterPayload
 ): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
-  const res = await fetch('/api/auth/signup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  return res.json();
+  try {
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      return {
+        success: false,
+        error: data?.error || 'নিবন্ধন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।',
+      };
+    }
+
+    return data;
+  } catch (error) {
+    console.error('[auth/signup] fetch failed:', error);
+    return {
+      success: false,
+      error: 'নেটওয়ার্ক সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।',
+    };
+  }
 }
 
 export async function logout(): Promise<{ success: boolean }> {
@@ -216,7 +234,7 @@ export async function fetchUnits(): Promise<MeasurementUnit[]> {
 
 // ─── ADMIN: MODERATION ────────────────────────────────────────────────────────
 
-export async function fetchModerationData(type: 'all' | 'listings' | 'alerts' = 'all') {
+export async function fetchModerationData(type: 'all' | 'kyc' | 'listings' | 'alerts' = 'all') {
   const res = await fetch(`/api/admin/moderation?type=${type}`);
   return res.json();
 }

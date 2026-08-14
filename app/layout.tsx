@@ -31,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="bn" className={`h-full ${hindSiliguri.variable} ${inter.variable}`}>
+    <html lang="bn" data-scroll-behavior="smooth" className={`h-full ${hindSiliguri.variable} ${inter.variable}`}>
       <body className="h-full flex flex-col bg-slate-50 text-slate-900 antialiased">
         <Navbar />
         <KycNoticeBanner />

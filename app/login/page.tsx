@@ -446,18 +446,6 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* ─── Helpline Banner ─── */}
-          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-3.5 flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
-              <PhoneCall className="w-5 h-5 text-amber-700" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-amber-900">সাহায্যের জন্য কল করুন</p>
-              <p className="text-sm font-black text-amber-800">01XXXXXXXXX</p>
-              <p className="text-[10px] text-amber-600">সকাল ৮টা - রাত ১০টা</p>
-            </div>
-          </div>
-
           {/* ─── Security Badge ─── */}
           <div className="mt-4 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />

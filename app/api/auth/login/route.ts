@@ -27,11 +27,14 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const authPhone = phone.trim().startsWith('+')
+      ? phone.trim()
+      : phone.trim().startsWith('0')
+        ? `+88${phone.trim().slice(1)}`
+        : `+${phone.trim().replace(/\D/g, '')}`;
 
-    // Authenticate with Supabase Auth using phone as email convention
-    const email = `${phone.trim()}@aaroth.local`;
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
+      phone: authPhone,
       password,
     });
 

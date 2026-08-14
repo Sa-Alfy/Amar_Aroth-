@@ -21,8 +21,13 @@ export async function GET(request: NextRequest) {
   const categoryId = searchParams.get('categoryId');
   const districtId = searchParams.get('districtId');
   const search = searchParams.get('search');
+  const mine = searchParams.get('mine') === 'true';
 
   if (!isSupabaseConfigured()) {
+    if (mine) {
+      return NextResponse.json({ success: false, error: 'Supabase not configured' }, { status: 503 });
+    }
+
     let results = [...INITIAL_LISTINGS];
     if (categoryId) results = results.filter((item) => item.categoryId === Number(categoryId));
     if (districtId) results = results.filter((item) => item.districtId === Number(districtId));
@@ -83,6 +88,8 @@ export async function GET(request: NextRequest) {
         };
       });
 
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
     let query = supabase
       .from('listings')
       .select(`
@@ -96,7 +103,15 @@ export async function GET(request: NextRequest) {
         listing_images (image_url, sort_order)
       `)
       .in('status', ['active', 'negotiating', 'reserved', 'sold'])
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (mine) {
+      if (authError || !user) {
+        return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
+      }
+      query = query.eq('created_by_user_id', user.id);
+    }
 
     if (categoryId) query = query.eq('category_id', Number(categoryId));
     if (districtId) query = query.eq('district_id', Number(districtId));
@@ -121,11 +136,13 @@ export async function GET(request: NextRequest) {
         listing_images (image_url, sort_order)
       `)
       .in('status', ['active', 'negotiating', 'reserved', 'sold'])
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(50);
 
     if (listingError || !listingRows) {
-      console.warn('[api/listings] Fallback listing query failed:', listingError?.message);
-      return NextResponse.json({ success: true, listings: INITIAL_LISTINGS });
+      const message = listingError?.message || 'Database error while loading listings';
+      console.warn('[api/listings] Fallback listing query failed:', message);
+      return NextResponse.json({ success: false, error: message }, { status: 503 });
     }
 
     const sellerIds = [...new Set(listingRows.map((row: any) => row.seller_id).filter(Boolean))];
@@ -185,8 +202,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, listings });
   } catch (err: any) {
+    const message = err?.message || 'Database error while loading listings';
     console.error('[api/listings] Error:', err);
-    return NextResponse.json({ success: true, listings: INITIAL_LISTINGS });
+    return NextResponse.json({ success: false, error: message }, { status: 503 });
   }
 }
 
@@ -210,7 +228,40 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { sellerId, categoryId, title, description, quantity, unitId, expectedPrice, divisionId, districtId, upazilaId, specificLocation, imageUrls } = body;
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ success: false, error: 'ভাল ডাটা পাঠাননি' }, { status: 400 });
+    }
+
+    const { categoryId, title, description, quantity, unitId, expectedPrice, divisionId, districtId, upazilaId, specificLocation, imageUrls } = body;
+
+    const isPositiveInt = (value: unknown) => Number.isInteger(value) && Number(value) > 0;
+    const isNonNegativeNumber = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+    if (typeof title !== 'string' || title.trim().length < 5 || title.trim().length > 140) {
+      return NextResponse.json({ success: false, error: 'শিরোনাম ৫ থেকে ১৪০ অক্ষরের মধ্যে দিন' }, { status: 400 });
+    }
+    if (!isNonNegativeNumber(quantity) || Number(quantity) <= 0) {
+      return NextResponse.json({ success: false, error: 'পরিমাণ ০ এর চেয়ে বড় হতে হবে' }, { status: 400 });
+    }
+    if (!isNonNegativeNumber(expectedPrice) || Number(expectedPrice) < 0) {
+      return NextResponse.json({ success: false, error: 'প্রত্যাশিত দাম শূন্য বা তার বেশি হতে হবে' }, { status: 400 });
+    }
+    if (!isPositiveInt(categoryId) || !isPositiveInt(unitId) || !isPositiveInt(divisionId) || !isPositiveInt(districtId) || !isPositiveInt(upazilaId)) {
+      return NextResponse.json({ success: false, error: 'ক্যাটাগরি, ইউনিট ও অবস্থানের তথ্য সঠিক দিন' }, { status: 400 });
+    }
+    if (imageUrls !== undefined && (!Array.isArray(imageUrls) || imageUrls.length > 5 || imageUrls.some((url: unknown) => typeof url !== 'string' || !/^https:\/\//i.test(url)))) {
+      return NextResponse.json({ success: false, error: 'ছবির লিংক ৫টির বেশি নয়, HTTPS লিঙ্ক হতে হবে' }, { status: 400 });
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('is_verified')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile || profile.is_verified === false) {
+      return NextResponse.json({ success: false, error: 'আপনার প্রোফাইল যাচাইকৃত না হওয়ায় লিস্টিং পোস্ট করা যাবে না' }, { status: 403 });
+    }
 
     // Log device footprint
     const forwarded = request.headers.get('x-forwarded-for');
@@ -224,21 +275,23 @@ export async function POST(request: NextRequest) {
       });
     } catch {}
 
+    // Ignore sellerId from the request body. Agent-on-behalf-of posting will need a seller_agents table
+    // plus an authorization check before sellerId can ever be honored.
     // Insert listing — database trigger may auto-flag as 'flagged_review'
     const { data: listingData, error: listingError } = await supabase
       .from('listings')
       .insert({
-        seller_id: sellerId || user.id,
+        seller_id: user.id,
         created_by_user_id: user.id,
         category_id: categoryId,
-        title,
+        title: title.trim(),
         description: description || null,
-        quantity,
-        unit_id: unitId,
-        expected_price: expectedPrice,
-        division_id: divisionId,
-        district_id: districtId,
-        upazila_id: upazilaId,
+        quantity: Number(quantity),
+        unit_id: Number(unitId),
+        expected_price: Number(expectedPrice),
+        division_id: Number(divisionId),
+        district_id: Number(districtId),
+        upazila_id: Number(upazilaId),
         specific_location: specificLocation || null,
         status: 'active',
       })

@@ -38,8 +38,7 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
 
   return (
     <div
-      onClick={() => (onViewClick || onContactClick)(listing)}
-      className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
+      className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between group cursor-default"
     >
       
       {/* ছবি ও ব্যাজ */}

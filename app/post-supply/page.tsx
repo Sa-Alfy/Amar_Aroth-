@@ -18,12 +18,12 @@ export default function PostSupplyPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState<number>(1);
-  const [quantity, setQuantity] = useState<number | ''>(5);
+  const [quantity, setQuantity] = useState<number | ''>('');
   const [unitId, setUnitId] = useState<number>(2);
-  const [expectedPrice, setExpectedPrice] = useState<number | ''>(24000);
+  const [expectedPrice, setExpectedPrice] = useState<number | ''>('');
   const [divisionId, setDivisionId] = useState<number>(1);
-  const [districtId, setDistrictId] = useState<number>(101);
-  const [upazilaId, setUpazilaId] = useState<number>(1001);
+  const [districtId, setDistrictId] = useState<number | ''>('');
+  const [upazilaId, setUpazilaId] = useState<number | ''>('');
   const [unionName, setUnionName] = useState('');
   const [sellerName, setSellerName] = useState('');
   const [sellerPhone, setSellerPhone] = useState('');
@@ -97,8 +97,8 @@ export default function PostSupplyPage() {
       unitId,
       expectedPrice: Number(expectedPrice),
       divisionId,
-      districtId,
-      upazilaId,
+      districtId: Number(districtId),
+      upazilaId: Number(upazilaId),
       specificLocation: unionName || undefined,
       imageUrls: imageUrls.filter((u) => u.trim().length > 0),
     });
@@ -206,7 +206,7 @@ export default function PostSupplyPage() {
                 <input
                   type="tel"
                   required
-                  placeholder="যেমন: ০১৭১১-৯ODEC"
+                  placeholder="যেমন: ০১৭১১-২২৩৩৪৪"
                   value={sellerPhone}
                   onChange={(e) => setSellerPhone(e.target.value)}
                   className="w-full p-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-slate-50 font-mono"

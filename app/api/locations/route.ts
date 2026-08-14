@@ -16,7 +16,7 @@ export async function GET() {
       supabase.from('upazilas').select('id, district_id, name_en, name_bn').order('id'),
     ]);
 
-    if (divRes.error || !divRes.data) {
+    if (divRes.error || !divRes.data || divRes.data.length === 0) {
       return NextResponse.json({ success: true, locations: BANGLADESH_LOCATIONS });
     }
 
