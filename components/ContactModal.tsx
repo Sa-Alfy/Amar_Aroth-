@@ -34,32 +34,10 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
         return;
       }
 
-      const message = (() => {
-        const error = result.error || 'অভিযোগের নম্বর দেখাতে ব্যর্থ হয়েছে।';
-        if (error.includes('Authentication required') || error.includes('login') || error.includes('logged in')) {
-          return 'আপনাকে লগইন করতে হবে';
-        }
-        if (error.includes('quota exceeded') || error.includes('quota') || error.includes('Too many') || error.includes('Daily')) {
-          return 'দৈনিক নম্বর দেখার সীমা শেষ হয়েছে';
-        }
-        return 'নম্বর দেখাতে ব্যর্থ হয়েছে';
-      })();
-
-      setRevealError(message);
+      setRevealError(result.error || 'নম্বর দেখাতে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন');
       setRevealState('error');
-    } catch (error: any) {
-      const message = (() => {
-        const fallback = error?.message || 'নম্বর দেখাতে ব্যর্থ হয়েছে';
-        if (fallback.includes('Authentication required') || fallback.includes('login') || fallback.includes('logged in')) {
-          return 'আপনাকে লগইন করতে হবে';
-        }
-        if (fallback.includes('quota exceeded') || fallback.includes('quota') || fallback.includes('Too many') || fallback.includes('Daily')) {
-          return 'দৈনিক নম্বর দেখার সীমা শেষ হয়েছে';
-        }
-        return 'নম্বর দেখাতে ব্যর্থ হয়েছে';
-      })();
-
-      setRevealError(message);
+    } catch {
+      setRevealError('নম্বর দেখাতে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন');
       setRevealState('error');
     }
   };

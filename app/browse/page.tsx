@@ -10,8 +10,8 @@ import { Search, Filter, RefreshCw, SlidersHorizontal, MapPin, Check, X } from '
 
 function BrowseContent() {
   const searchParams = useSearchParams();
-  const initialSearch = searchParams.get('q') ?? '';
-  const initialDistrict = searchParams.get('district');
+  const initialSearch = searchParams?.get('q') ?? '';
+  const initialDistrict = searchParams?.get('district') ?? null;
 
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);

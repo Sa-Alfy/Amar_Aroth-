@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-function normalizePhoneForAuth(phone: string) {
-  const digits = phone.replace(/\D/g, '');
-  if (!digits) return phone;
-  if (digits.startsWith('880')) return `+${digits}`;
-  if (digits.startsWith('0')) return `+88${digits.slice(1)}`;
-  return `+${digits}`;
-}
+import { normalizePhone } from '@/lib/client/api';
 
 /**
  * POST /api/auth/signup
@@ -18,10 +11,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { role, fullName, phone, password, nidNumber, divisionId, districtId, upazilaId, address } = body;
-    const sanitizedPhone = phone?.trim();
+    const normalizedPhone = normalizePhone(phone);
 
     // Validation
-    if (!sanitizedPhone || sanitizedPhone.length < 11) {
+    if (!normalizedPhone || normalizedPhone.length < 11) {
       return NextResponse.json({ success: false, error: 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন' }, { status: 400 });
     }
     if (!fullName || fullName.trim().length < 3) {
@@ -35,27 +28,10 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
+    const email = `${normalizedPhone}@amararoth.com`;
 
-    const { data: existingProfile, error: existingProfileError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('phone', sanitizedPhone)
-      .maybeSingle();
-
-    if (existingProfileError && existingProfileError.code !== 'PGRST116') {
-      console.error('[auth/signup] Profile lookup failed:', existingProfileError);
-    }
-
-    if (existingProfile) {
-      return NextResponse.json({ success: false, error: 'এই ফোন নম্বরে ইতিমধ্যে একাউন্ট আছে' }, { status: 409 });
-    }
-
-    const authPhone = normalizePhoneForAuth(sanitizedPhone);
-
-    // Create auth user using the phone number, which matches the app's phone-first identity model
-    // and avoids repeated pseudo-email rate-limit hits.
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      phone: authPhone,
+      email,
       password,
     });
 
@@ -73,38 +49,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, error: 'এই ফোন নম্বরে ইতিমধ্যে একাউন্ট আছে' }, { status: 409 });
       }
 
-      // Supabase may respond with a message stating phone-based signups are disabled
-      if (em.includes('phone') && em.includes('disabled') || em.includes('phone signups are disabled') || em.includes('phone signups disabled')) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'ফোন দিয়ে নিবন্ধন অক্ষম: আপনার Supabase প্রজেক্টে ফোন সাইনআপ সক্ষম করা নেই। ডেভ-টিম কনফিগারেশন চেক করুন।',
-          },
-          { status: 403 }
-        );
-      }
-
       return NextResponse.json({ success: false, error: authError.message }, { status: 400 });
     }
 
-    if (!authData.user) {
-      return NextResponse.json({ success: false, error: 'ব্যবহারকারী তৈরি করা সম্ভব হয়নি' }, { status: 500 });
+    if (!authData.user || (Array.isArray(authData.user.identities) && authData.user.identities.length === 0)) {
+      return NextResponse.json({ success: false, error: 'এই ফোন নম্বরে ইতিমধ্যে একাউন্ট আছে' }, { status: 409 });
     }
 
-    // Map role name to DB user_type
-    const userTypeMap: Record<string, string> = {
-      farmer: 'farmer',
-      agent: 'dealer',
-      arathdar: 'arathdar',
-      dealer: 'dealer',
-      aggregator: 'aggregator',
-    };
-    const userType = userTypeMap[role] || 'farmer';
+    // Direct role to DB user_type mapping (farmer, arathdar, dokandar)
+    const userType = role || 'farmer';
 
     // Create profile row
     const { error: profileError } = await supabase.from('profiles').insert({
       id: authData.user.id,
-      phone: phone.trim(),
+      phone: normalizedPhone,
       full_name: fullName.trim(),
       user_type: userType,
       nid_number: nidNumber.trim(),
@@ -117,7 +75,6 @@ export async function POST(request: NextRequest) {
 
     if (profileError) {
       console.error('[auth/signup] Orphaned auth account profile insert failed. user_id:', authData.user.id, profileError);
-      // TODO: delete this orphaned auth user via a service-role client/admin-only dependency.
       return NextResponse.json({ success: false, error: 'প্রোফাইল তৈরি করতে ত্রুটি হয়েছে' }, { status: 500 });
     }
 
@@ -137,7 +94,7 @@ export async function POST(request: NextRequest) {
       success: true,
       user: {
         id: authData.user.id,
-        phone: phone.trim(),
+        phone: normalizedPhone,
         fullName: fullName.trim(),
         userType: userType,
         isVerified: false,

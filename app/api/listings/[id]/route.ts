@@ -22,7 +22,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     const { data: listing, error: fetchError } = await supabase
       .from('listings')
-      .select('id, created_by_user_id')
+      .select('id, created_by_user_id, status')
       .eq('id', id)
       .single();
 
@@ -32,6 +32,13 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     if (listing.created_by_user_id !== user.id) {
       return NextResponse.json({ success: false, error: 'Forbidden.' }, { status: 403 });
+    }
+
+    if (listing.status === 'flagged_review' && status !== 'hidden') {
+      return NextResponse.json({
+        success: false,
+        error: 'লিস্টিংটি পর্যালোচনাধীন (flagged for review) রয়েছে। অ্যাডমিন অনুমোদনের আগে এটি সক্রিয় করা সম্ভব নয়।',
+      }, { status: 403 });
     }
 
     const { data, error } = await supabase

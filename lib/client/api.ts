@@ -9,7 +9,21 @@ import type { SupplyListing, Category, MeasurementUnit, LocationDivision } from 
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'farmer' | 'agent' | 'arathdar';
+export type UserRole = 'farmer' | 'arathdar' | 'dokandar';
+
+export function normalizePhone(phone: string): string {
+  const digits = (phone || '').replace(/\D/g, '');
+  if (digits.startsWith('880')) {
+    return digits.slice(2);
+  }
+  if (digits.startsWith('0')) {
+    return digits;
+  }
+  if (digits.length === 10 && digits.startsWith('1')) {
+    return `0${digits}`;
+  }
+  return digits;
+}
 
 export interface UserProfile {
   id: string;
@@ -31,7 +45,7 @@ export interface UserProfile {
 export async function login(
   phone: string,
   password: string,
-  role: UserRole
+  role?: UserRole
 ): Promise<{ success: boolean; user?: UserProfile; error?: string }> {
   const res = await fetch('/api/auth/login', {
     method: 'POST',

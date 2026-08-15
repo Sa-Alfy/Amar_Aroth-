@@ -3,53 +3,12 @@
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserRole, login, requestPasswordResetOtp, verifyOtpAndResetPassword } from '@/lib/client/api';
+import { login, requestPasswordResetOtp, verifyOtpAndResetPassword } from '@/lib/client/api';
 import {
-  Store, Phone, Lock, Eye, EyeOff, ShieldCheck, User,
-  Store as StoreIcon, Briefcase, X, MessageSquare, KeyRound,
-  CheckCircle2, ArrowLeft, Loader2, PhoneCall, LogIn, ArrowRight
+  Store, Phone, Lock, Eye, EyeOff, ShieldCheck,
+  X, MessageSquare, KeyRound, CheckCircle2, ArrowLeft,
+  Loader2, LogIn, ArrowRight
 } from 'lucide-react';
-
-// ─── ROLE CONFIG ──────────────────────────────────────────────────────────────
-
-const ROLES = [
-  {
-    id: 'farmer' as UserRole,
-    label: 'কৃষক',
-    labelEn: 'Farmer',
-    desc: 'উৎপাদক',
-    icon: User,
-    emoji: '🌾',
-    color: 'text-emerald-700',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-400',
-    activeBg: 'bg-emerald-600',
-  },
-  {
-    id: 'agent' as UserRole,
-    label: 'এজেন্ট',
-    labelEn: 'Agent',
-    desc: 'সংগ্রাহক',
-    icon: Briefcase,
-    emoji: '💼',
-    color: 'text-blue-700',
-    bg: 'bg-blue-50',
-    border: 'border-blue-400',
-    activeBg: 'bg-blue-600',
-  },
-  {
-    id: 'arathdar' as UserRole,
-    label: 'আড়তদার',
-    labelEn: 'Dealer',
-    desc: 'পাইকার/ডিলার',
-    icon: StoreIcon,
-    emoji: '🏪',
-    color: 'text-amber-700',
-    bg: 'bg-amber-50',
-    border: 'border-amber-400',
-    activeBg: 'bg-amber-600',
-  },
-];
 
 // ─── FORGOT PASSWORD MODAL ────────────────────────────────────────────────────
 
@@ -94,7 +53,7 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
     setError(null);
     const code = otp.join('');
     if (code.length < 4) { setError('৪ ডিজিটের OTP কোড দিন'); return; }
-    if (!newPin || newPin.length < 4) { setError('নতুন পিন/পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে'); return; }
+    if (!newPin || newPin.length < 6) { setError('নতুন পিন/পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে'); return; }
     setIsLoading(true);
     const res = await verifyOtpAndResetPassword(phone, code, newPin);
     setIsLoading(false);
@@ -200,7 +159,7 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
                   <input
                     type={showPin ? 'text' : 'password'}
                     inputMode="numeric"
-                    placeholder="কমপক্ষে ৪ ডিজিট"
+                    placeholder="কমপক্ষে ৬ অক্ষর"
                     value={newPin}
                     onChange={(e) => setNewPin(e.target.value)}
                     className="w-full px-4 pr-11 py-3.5 rounded-2xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-mono tracking-widest"
@@ -256,7 +215,6 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<UserRole>('farmer');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -264,25 +222,27 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showForgot, setShowForgot] = useState(false);
 
-  const activeRole = ROLES.find((r) => r.id === selectedRole)!;
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
 
-    const res = await login(phone, password, selectedRole);
+    const res = await login(phone, password);
     setIsLoading(false);
 
-    if (!res.success) {
+    if (!res.success || !res.user) {
       setErrorMessage(res.error || 'লগইন ব্যর্থ হয়েছে। নম্বর ও পাসওয়ার্ড পরীক্ষা করুন।');
       return;
     }
 
-    if (selectedRole === 'farmer') router.push('/account');
-    else if (selectedRole === 'arathdar') router.push('/browse');
-    else if (selectedRole === 'agent') router.push('/admin');
-    else router.push('/');
+    const userType = res.user.userType;
+    if (userType === 'farmer') {
+      router.push('/account');
+    } else if (userType === 'arathdar' || userType === 'dokandar' || userType === 'dealer' || userType === 'aggregator') {
+      router.push('/browse');
+    } else {
+      router.push('/');
+    }
   };
 
   return (
@@ -300,51 +260,13 @@ export default function LoginPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">আমার আড়তে লগইন</h1>
-            <p className="text-sm text-slate-500 mt-1">আপনার ভূমিকা বেছে নিয়ে প্রবেশ করুন</p>
+            <p className="text-sm text-slate-500 mt-1">মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে প্রবেশ করুন</p>
           </div>
         </div>
 
         <div className="sm:mx-auto w-full sm:max-w-sm">
-          {/* ─── Role Selector ─── */}
-          <div className="grid grid-cols-3 gap-2.5 mb-5">
-            {ROLES.map((role) => {
-              const isActive = selectedRole === role.id;
-              const RoleIcon = role.icon;
-              return (
-                <button
-                  key={role.id}
-                  type="button"
-                  onClick={() => setSelectedRole(role.id)}
-                  aria-pressed={isActive}
-                  className={`relative py-3.5 px-2 rounded-2xl border-2 transition-all flex flex-col items-center gap-1.5 ${
-                    isActive
-                      ? `${role.border} ${role.bg} shadow-md scale-[1.02]`
-                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  {isActive && (
-                    <div className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full ${role.activeBg} flex items-center justify-center`}>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  )}
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isActive ? role.bg : 'bg-slate-100'}`}>
-                    <RoleIcon className={`w-5 h-5 ${isActive ? role.color : 'text-slate-600'}`} />
-                  </div>
-                  <span className={`text-xs font-black ${isActive ? role.color : 'text-slate-700'}`}>{role.label}</span>
-                  <span className="text-[10px] text-slate-400 font-medium">{role.desc}</span>
-                </button>
-              );
-            })}
-          </div>
-
           {/* ─── Login Card ─── */}
           <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-200 overflow-hidden">
-            {/* Role Banner */}
-            <div className={`${activeRole.bg} px-5 py-3 flex items-center gap-2.5 border-b ${activeRole.border}/30`}>
-              <activeRole.icon className={`w-5 h-5 ${activeRole.color}`} />
-              <span className={`text-sm font-bold ${activeRole.color}`}>{activeRole.label} ({activeRole.labelEn}) একাউন্টে লগইন</span>
-            </div>
-
             <form onSubmit={handleLogin} className="p-5 space-y-4">
               {/* Phone Input */}
               <div>
@@ -394,7 +316,7 @@ export default function LoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     inputMode="numeric"
                     required
-                    placeholder="আপনার পিন বা পাসওয়ার্ড"
+                    placeholder="আপনার পিন বা পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-4 pr-12 py-4 rounded-2xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-mono tracking-widest placeholder:tracking-normal placeholder:font-sans"

@@ -28,21 +28,9 @@ const ROLES = [
     activeBg: 'bg-emerald-600',
   },
   {
-    id: 'agent' as UserRole,
-    label: 'এজেন্ট',
-    labelEn: 'Agent',
-    desc: 'পণ্য সংগ্রাহক',
-    icon: Briefcase,
-    emoji: '💼',
-    color: 'text-blue-700',
-    bg: 'bg-blue-50',
-    border: 'border-blue-400',
-    activeBg: 'bg-blue-600',
-  },
-  {
     id: 'arathdar' as UserRole,
-    label: 'আড়তদার / ডিলার',
-    labelEn: 'Dealer',
+    label: 'আড়তদার',
+    labelEn: 'Arathdar',
     desc: 'পাইকারি ক্রেতা',
     icon: StoreIcon,
     emoji: '🏪',
@@ -50,6 +38,18 @@ const ROLES = [
     bg: 'bg-amber-50',
     border: 'border-amber-400',
     activeBg: 'bg-amber-600',
+  },
+  {
+    id: 'dokandar' as UserRole,
+    label: 'দোকানদার',
+    labelEn: 'Dokandar',
+    desc: 'খুচরা বিক্রেতা',
+    icon: Briefcase,
+    emoji: '🛍️',
+    color: 'text-blue-700',
+    bg: 'bg-blue-50',
+    border: 'border-blue-400',
+    activeBg: 'bg-blue-600',
   },
 ];
 
@@ -239,7 +239,7 @@ export default function SignupPage() {
     setErrorMessage(null);
     if (!fullName || fullName.trim().length < 3) { setErrorMessage('আপনার পুরো নাম লিখুন (কমপক্ষে ৩ অক্ষর)'); return; }
     if (!phone || phone.trim().length < 11) { setErrorMessage('সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন'); return; }
-    if (!password || password.length < 4) { setErrorMessage('পিন/পাসওয়ার্ড কমপক্ষে ৪ ডিজিট হতে হবে'); return; }
+    if (!password || password.length < 6) { setErrorMessage('পাসওয়ার্ড বা পিন কমপক্ষে ৬ অক্ষরের হতে হবে'); return; }
     if (password !== confirmPassword) { setErrorMessage('পাসওয়ার্ড দুটি মিলছে না। আবার লিখুন।'); return; }
     setStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -296,8 +296,7 @@ export default function SignupPage() {
 
   const handleProceedToDashboard = () => {
     if (role === 'farmer') router.push('/account');
-    else if (role === 'arathdar') router.push('/browse');
-    else if (role === 'agent') router.push('/admin');
+    else if (role === 'arathdar' || role === 'dokandar') router.push('/browse');
     else router.push('/');
   };
 
@@ -431,7 +430,7 @@ export default function SignupPage() {
                       type={showPassword ? 'text' : 'password'}
                       inputMode="numeric"
                       required
-                      placeholder="কমপক্ষে ৪ ডিজিটের পিন"
+                      placeholder="কমপক্ষে ৬ অক্ষরের পিন বা পাসওয়ার্ড"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full pl-4 pr-12 py-4 rounded-2xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-mono tracking-widest placeholder:tracking-normal placeholder:font-sans"
@@ -831,8 +830,8 @@ export default function SignupPage() {
             </div>
             <div>
               <p className="text-xs font-bold text-amber-900">সাহায্যের জন্য কল করুন</p>
-              <p className="text-sm font-black text-amber-800">01XXXXXXXXX</p>
-              <p className="text-[10px] text-amber-600">সকাল ৮টা - রাত ১০টা</p>
+              <p className="text-sm font-black text-amber-800">01310-075529</p>
+              <p className="text-[10px] text-amber-600">সকাল ৮টা - রাত ১০টা (টোল ফ্রি)</p>
             </div>
           </div>
         )}

@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json(
-        { success: false, error: 'Authentication required to view seller contact.' },
+        { success: false, error: 'ফোন নম্বর দেখতে লগইন করুন' },
         { status: 401 }
       );
     }
@@ -55,32 +55,76 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      // Database RPC raises exceptions for rate limit violations
-      const isRateLimit = error.message.includes('quota exceeded') || error.message.includes('Too many');
+      console.error('[phone-reveal] RPC error:', error);
       return NextResponse.json(
-        { success: false, error: error.message },
-        { status: isRateLimit ? 429 : 400 }
+        { success: false, error: 'নম্বর দেখাতে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন' },
+        { status: 500 }
       );
     }
 
     if (data && data.length > 0) {
       const row = data[0];
-      return NextResponse.json({
-        success: true,
-        phone: row.phone,
-        sellerName: row.seller_name,
-        isVerified: row.is_verified,
-      });
+
+      if (row.status === 'ok' && row.phone) {
+        return NextResponse.json({
+          success: true,
+          phone: row.phone,
+          sellerName: row.seller_name,
+          isVerified: row.is_verified,
+        });
+      }
+
+      if (row.status === 'unauthenticated') {
+        return NextResponse.json(
+          { success: false, error: 'ফোন নম্বর দেখতে লগইন করুন' },
+          { status: 401 }
+        );
+      }
+
+      if (row.status === 'unverified') {
+        return NextResponse.json(
+          { success: false, error: 'আপনার অ্যাকাউন্ট যাচাই হওয়ার পর নম্বর দেখতে পারবেন' },
+          { status: 403 }
+        );
+      }
+
+      if (row.status === 'tier_blocked') {
+        return NextResponse.json(
+          { success: false, error: 'আপনি এই বিক্রেতার কাছ থেকে সরাসরি কিনতে পারবেন না' },
+          { status: 403 }
+        );
+      }
+
+      if (row.status === 'quota_daily') {
+        return NextResponse.json(
+          { success: false, error: 'আজকের সীমা শেষ, আগামীকাল আবার চেষ্টা করুন' },
+          { status: 429 }
+        );
+      }
+
+      if (row.status === 'quota_ip') {
+        return NextResponse.json(
+          { success: false, error: 'অনেকবার চেষ্টা হয়েছে, কিছুক্ষণ পর আবার দেখুন' },
+          { status: 429 }
+        );
+      }
+
+      if (row.status === 'not_found') {
+        return NextResponse.json(
+          { success: false, error: 'পোস্টটি পাওয়া যায়নি' },
+          { status: 404 }
+        );
+      }
     }
 
     return NextResponse.json(
-      { success: false, error: 'Seller contact details not found.' },
-      { status: 404 }
+      { success: false, error: 'নম্বর দেখাতে সমস্যা হয়েছে, পরে আবার চেষ্টা করুন' },
+      { status: 500 }
     );
   } catch (err: any) {
     console.error('[phone-reveal] Unexpected error:', err);
     return NextResponse.json(
-      { success: false, error: 'Internal server error.' },
+      { success: false, error: 'সার্ভারে সমস্যা হয়েছে। পরে আবার চেষ্টা করুন।' },
       { status: 500 }
     );
   }

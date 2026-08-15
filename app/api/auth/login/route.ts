@@ -1,40 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { normalizePhone } from '@/lib/client/api';
 
 /**
  * POST /api/auth/login
  * 
- * Server-side authentication. Accepts phone + password + role,
+ * Server-side authentication. Accepts phone + password,
  * authenticates via Supabase Auth, returns user profile.
  * Session cookies are set automatically by the Supabase SSR client.
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { phone, password, role } = body;
+    const { phone, password } = body;
+    const normalizedPhone = normalizePhone(phone);
 
-    if (!phone || phone.trim().length < 11) {
+    if (!normalizedPhone || normalizedPhone.length < 11) {
       return NextResponse.json(
         { success: false, error: 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন' },
         { status: 400 }
       );
     }
-    if (!password || password.length < 4) {
+    if (!password || password.length < 6) {
       return NextResponse.json(
-        { success: false, error: 'পাসওয়ার্ড বা পিন কমপক্ষে ৪ অক্ষরের হতে হবে' },
+        { success: false, error: 'পাসওয়ার্ড বা পিন কমপক্ষে ৬ অক্ষরের হতে হবে' },
         { status: 400 }
       );
     }
 
     const supabase = await createClient();
-    const authPhone = phone.trim().startsWith('+')
-      ? phone.trim()
-      : phone.trim().startsWith('0')
-        ? `+88${phone.trim().slice(1)}`
-        : `+${phone.trim().replace(/\D/g, '')}`;
+    const email = `${normalizedPhone}@amararoth.com`;
 
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      phone: authPhone,
+      email,
       password,
     });
 
@@ -48,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Fetch profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, phone, full_name, user_type, is_verified, nid_number, avatar_url, division_id, district_id, upazila_id, address, risk_score, phone_verified, nid_verified')
+      .select('id, phone, full_name, user_type, is_verified, avatar_url, division_id, district_id, upazila_id, address, risk_score, phone_verified, nid_verified')
       .eq('id', authData.user.id)
       .single();
 
@@ -79,7 +77,6 @@ export async function POST(request: NextRequest) {
         fullName: profile.full_name,
         userType: profile.user_type,
         isVerified: profile.is_verified,
-        nidNumber: profile.nid_number,
         avatarUrl: profile.avatar_url,
         divisionId: profile.division_id,
         districtId: profile.district_id,

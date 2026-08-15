@@ -185,27 +185,36 @@ export default function AccountPage() {
                     </td>
 
                     <td className="p-4">
-                      <select
-                        value={item.status}
-                        onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                        className={`p-1.5 rounded-lg border text-xs font-semibold focus:outline-none ${
-                          item.status === 'active'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                            : item.status === 'negotiating'
-                            ? 'bg-amber-50 text-amber-800 border-amber-300'
-                            : item.status === 'reserved'
-                            ? 'bg-purple-50 text-purple-800 border-purple-300'
-                            : item.status === 'sold'
-                            ? 'bg-slate-100 text-slate-700 border-slate-300'
-                            : 'bg-gray-100 text-gray-700 border-gray-300'
-                        }`}
-                      >
-                        <option value="active">Live (সচল)</option>
-                        <option value="negotiating">Negotiating (আলোচনাধীন)</option>
-                        <option value="reserved">Reserved (সংরক্ষিত)</option>
-                        <option value="sold">Sold Out (বিক্রিত)</option>
-                        <option value="hidden">Hidden (লুকানো)</option>
-                      </select>
+                      {item.status === 'flagged_review' ? (
+                        <div className="inline-flex flex-col gap-1">
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 font-bold text-[11px]">
+                            ⚠️ পর্যালোচনাধীন (Review)
+                          </span>
+                          <span className="text-[10px] text-slate-400">অ্যাডমিন রিভিউ বাকি</span>
+                        </div>
+                      ) : (
+                        <select
+                          value={item.status}
+                          onChange={(e) => handleStatusChange(item.id, e.target.value)}
+                          className={`p-1.5 rounded-lg border text-xs font-semibold focus:outline-none ${
+                            item.status === 'active'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              : item.status === 'negotiating'
+                              ? 'bg-amber-50 text-amber-800 border-amber-300'
+                              : item.status === 'reserved'
+                              ? 'bg-purple-50 text-purple-800 border-purple-300'
+                              : item.status === 'sold'
+                              ? 'bg-slate-100 text-slate-700 border-slate-300'
+                              : 'bg-gray-100 text-gray-700 border-gray-300'
+                          }`}
+                        >
+                          <option value="active">Live (সচল)</option>
+                          <option value="negotiating">Negotiating (আলোচনাধীন)</option>
+                          <option value="reserved">Reserved (সংরক্ষিত)</option>
+                          <option value="sold">Sold Out (বিক্রিত)</option>
+                          <option value="hidden">Hidden (লুকানো)</option>
+                        </select>
+                      )}
                     </td>
 
                     <td className="p-4 text-right">

@@ -41,7 +41,11 @@ export type ListingStatus =
   | 'sold' 
   | 'expired' 
   | 'reported' 
-  | 'removed';
+  | 'removed'
+  | 'flagged_review'
+  | 'hidden'
+  | 'banned'
+  | 'disputed';
 
 export interface SupplyListing {
   id: string;

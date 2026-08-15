@@ -90,6 +90,10 @@ export async function GET(request: NextRequest) {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
+    if (mine && (authError || !user)) {
+      return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
+    }
+
     let query = supabase
       .from('listings')
       .select(`
@@ -102,15 +106,13 @@ export async function GET(request: NextRequest) {
         profiles_public!seller_id (full_name, user_type, is_verified),
         listing_images (image_url, sort_order)
       `)
-      .in('status', ['active', 'negotiating', 'reserved', 'sold'])
       .order('created_at', { ascending: false })
       .limit(50);
 
     if (mine) {
-      if (authError || !user) {
-        return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
-      }
-      query = query.eq('created_by_user_id', user.id);
+      query = query.eq('created_by_user_id', user!.id);
+    } else {
+      query = query.in('status', ['active', 'negotiating', 'reserved', 'sold']);
     }
 
     if (categoryId) query = query.eq('category_id', Number(categoryId));
@@ -124,7 +126,7 @@ export async function GET(request: NextRequest) {
 
     console.warn('[api/listings] Embedded profiles_public query failed, using fallback:', error?.message || 'Unknown error');
 
-    const { data: listingRows, error: listingError } = await supabase
+    let fallbackQuery = supabase
       .from('listings')
       .select(`
         *,
@@ -135,9 +137,20 @@ export async function GET(request: NextRequest) {
         upazilas (name_en, name_bn),
         listing_images (image_url, sort_order)
       `)
-      .in('status', ['active', 'negotiating', 'reserved', 'sold'])
       .order('created_at', { ascending: false })
       .limit(50);
+
+    if (mine) {
+      fallbackQuery = fallbackQuery.eq('created_by_user_id', user!.id);
+    } else {
+      fallbackQuery = fallbackQuery.in('status', ['active', 'negotiating', 'reserved', 'sold']);
+    }
+
+    if (categoryId) fallbackQuery = fallbackQuery.eq('category_id', Number(categoryId));
+    if (districtId) fallbackQuery = fallbackQuery.eq('district_id', Number(districtId));
+    if (search) fallbackQuery = fallbackQuery.ilike('title', `%${search}%`);
+
+    const { data: listingRows, error: listingError } = await fallbackQuery;
 
     if (listingError || !listingRows) {
       const message = listingError?.message || 'Database error while loading listings';

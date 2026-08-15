@@ -18,7 +18,7 @@ export async function GET() {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, phone, full_name, user_type, is_verified, nid_number, avatar_url, division_id, district_id, upazila_id, address, risk_score, phone_verified, nid_verified')
+      .select('id, phone, full_name, user_type, is_verified, avatar_url, division_id, district_id, upazila_id, address, risk_score, phone_verified, nid_verified')
       .eq('id', user.id)
       .single();
 
@@ -34,7 +34,6 @@ export async function GET() {
         fullName: profile.full_name,
         userType: profile.user_type,
         isVerified: profile.is_verified,
-        nidNumber: profile.nid_number,
         avatarUrl: profile.avatar_url,
         divisionId: profile.division_id,
         districtId: profile.district_id,
