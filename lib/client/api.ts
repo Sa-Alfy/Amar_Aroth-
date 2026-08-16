@@ -5,7 +5,14 @@
  * Every function calls fetch('/api/...') — the browser NEVER touches Supabase directly.
  */
 
-import type { SupplyListing, Category, MeasurementUnit, LocationDivision } from '@/lib/mockData';
+import type {
+  SupplyListing,
+  Category,
+  MeasurementUnit,
+  LocationDivision,
+  ListingFeed,
+  ListingKind,
+} from '@/lib/mockData';
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
@@ -152,27 +159,62 @@ export async function fetchCurrentUser(): Promise<UserProfile | null> {
 
 // ─── LISTINGS ─────────────────────────────────────────────────────────────────
 
-export async function fetchListings(filters?: {
+export interface ListingFilters {
   categoryId?: number | null;
   districtId?: number | null;
   searchQuery?: string;
-}): Promise<SupplyListing[]> {
+  /** supply = who I can buy from, demand = who wants to buy. */
+  kind?: ListingKind | null;
+  /** Narrows to one tier, e.g. only arathdar supply. */
+  posterType?: string | null;
+  /** The caller's own listings, including hidden and flagged ones. */
+  mine?: boolean;
+}
+
+export interface ListingIndex {
+  listings: SupplyListing[];
+  feeds: ListingFeed[];
+  viewerUserType: string | null;
+}
+
+function toListingParams(filters?: ListingFilters): string {
   const params = new URLSearchParams();
   if (filters?.categoryId) params.set('categoryId', String(filters.categoryId));
   if (filters?.districtId) params.set('districtId', String(filters.districtId));
   if (filters?.searchQuery) params.set('search', filters.searchQuery);
+  if (filters?.kind) params.set('kind', filters.kind);
+  if (filters?.posterType) params.set('posterType', filters.posterType);
+  if (filters?.mine) params.set('mine', 'true');
+  return params.toString();
+}
 
+/**
+ * Listings plus the feeds this session is permitted to see. Navigation and the
+ * arathdar কিনছি/বেচছি switch are built from `feeds` — never from a role switch
+ * in component code.
+ */
+export async function fetchListingIndex(filters?: ListingFilters): Promise<ListingIndex> {
   try {
-    const res = await fetch(`/api/listings?${params.toString()}`);
+    const res = await fetch(`/api/listings?${toListingParams(filters)}`);
     const data = await res.json();
-    return data.listings || [];
+    return {
+      listings: data.listings || [],
+      feeds: data.feeds || [],
+      viewerUserType: data.viewerUserType ?? null,
+    };
   } catch {
-    return [];
+    return { listings: [], feeds: [], viewerUserType: null };
   }
 }
 
+export async function fetchListings(filters?: ListingFilters): Promise<SupplyListing[]> {
+  const { listings } = await fetchListingIndex(filters);
+  return listings;
+}
+
 export interface CreateListingPayload {
-  sellerId?: string;
+  // sellerId is deliberately absent. Identity comes from the session; the route
+  // ignores any seller id in the body. Re-adding it here reopens impersonation.
   categoryId: number;
   title: string;
   description: string;
@@ -199,9 +241,28 @@ export async function createListing(
 
 // ─── PHONE REVEAL ─────────────────────────────────────────────────────────────
 
-export async function revealPhone(
-  listingId: string
-): Promise<{ success: boolean; phone?: string; sellerName?: string; isVerified?: boolean; error?: string }> {
+export type RevealStatus =
+  | 'ok'
+  | 'unauthenticated'
+  | 'unverified'
+  | 'tier_blocked'
+  | 'quota_daily'
+  | 'quota_ip'
+  | 'not_found'
+  | 'bad_request'
+  | 'error';
+
+export interface RevealResult {
+  success: boolean;
+  status?: RevealStatus;
+  phone?: string;
+  sellerName?: string;
+  isVerified?: boolean;
+  /** Already in Bangla and already actionable — show it as-is. */
+  error?: string;
+}
+
+export async function revealPhone(listingId: string): Promise<RevealResult> {
   const res = await fetch('/api/listings/phone-reveal', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

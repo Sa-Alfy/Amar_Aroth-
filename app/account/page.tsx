@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { fetchCurrentUser, UserProfile } from '@/lib/client/api';
 import { SupplyListing } from '@/lib/mockData';
+import { formatQty, formatRate, formatDate, formatCount } from '@/lib/format';
 import { Eye, PhoneCall, CheckCircle2, PlusCircle, Trash2 } from 'lucide-react';
 
 const validStatusOptions = ['active', 'negotiating', 'reserved', 'sold', 'hidden'] as const;
@@ -122,16 +123,16 @@ export default function AccountPage() {
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <span className="text-xs text-slate-500 block uppercase font-medium">Total Index Views</span>
+            <span className="text-xs text-slate-500 block uppercase font-medium">মোট দেখা হয়েছে</span>
             <span className="text-2xl font-black text-slate-900">
-              {userListings.reduce((sum, item) => sum + item.viewCount, 0)}
+              {formatCount(userListings.reduce((sum, item) => sum + item.viewCount, 0))}
             </span>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <span className="text-xs text-slate-500 block uppercase font-medium">Dealer Phone Reveals</span>
+            <span className="text-xs text-slate-500 block uppercase font-medium">নম্বর দেখা হয়েছে</span>
             <span className="text-2xl font-black text-brand-700">
-              {userListings.reduce((sum, item) => sum + item.contactCount, 0)}
+              {formatCount(userListings.reduce((sum, item) => sum + item.contactCount, 0))}
             </span>
           </div>
         </div>
@@ -159,12 +160,12 @@ export default function AccountPage() {
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="p-4 font-semibold text-slate-900">
                       <div className="line-clamp-1">{item.title}</div>
-                      <div className="text-[10px] text-slate-400 font-normal">{item.categoryNameBn} • Available {item.availableFrom}</div>
+                      <div className="text-[10px] text-slate-400 font-normal">{item.categoryNameBn} • পাওয়া যাবে {formatDate(item.availableFrom)}</div>
                     </td>
 
                     <td className="p-4">
-                      <div className="font-bold text-slate-900">{item.quantity.toLocaleString()} {item.unitSymbolBn}</div>
-                      <div className="text-brand-700 font-semibold">৳{item.expectedPricePerUnit.toLocaleString()} /{item.unitSymbolBn}</div>
+                      <div className="font-bold text-slate-900">{formatQty(item.quantity, item.unitSymbolBn)}</div>
+                      <div className="text-brand-700 font-semibold">{formatRate(item.expectedPricePerUnit, item.unitSymbolBn)}</div>
                     </td>
 
                     <td className="p-4 text-slate-600">
@@ -175,11 +176,11 @@ export default function AccountPage() {
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1 text-slate-500">
                           <Eye className="w-3.5 h-3.5" />
-                          {item.viewCount}
+                          {formatCount(item.viewCount)}
                         </span>
                         <span className="flex items-center gap-1 text-brand-700 font-bold">
                           <PhoneCall className="w-3.5 h-3.5" />
-                          {item.contactCount}
+                          {formatCount(item.contactCount)}
                         </span>
                       </div>
                     </td>

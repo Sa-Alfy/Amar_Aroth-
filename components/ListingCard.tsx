@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { SupplyListing } from '@/lib/mockData';
+import { SupplyListing, userTypeLabelBn } from '@/lib/mockData';
+import { formatQty, formatTaka, formatCount, formatDate } from '@/lib/format';
 import { MapPin, Phone, Eye, Calendar, CheckCircle2, Clock } from 'lucide-react';
 
 interface ListingCardProps {
@@ -27,14 +28,12 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
     }
   };
 
-  const getSellerTypeLabel = (type: string) => {
-    switch (type) {
-      case 'farmer': return 'কৃষক';
-      case 'aggregator': return 'সংগ্রাহক';
-      case 'cooperative': return 'সমবায়';
-      default: return type;
-    }
-  };
+  const posterType = listing.posterUserType ?? listing.sellerType;
+  const posterLabelBn = userTypeLabelBn(posterType);
+  const isDemand = listing.listingKind === 'demand';
+  // canContact is undefined on payloads predating the tier model — treat as allowed
+  // so existing screens keep working. The reveal RPC is the real gate either way.
+  const canContact = listing.canContact !== false;
 
   return (
     <div
@@ -75,7 +74,7 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
         <div>
           {/* বিক্রেতার তথ্য */}
           <div className="flex items-center gap-1.5 text-xs text-slate-600 mb-1.5">
-            <span className="font-semibold text-slate-800">{listing.sellerName}</span>
+            <span className="font-semibold text-slate-800">{listing.sellerName ?? posterLabelBn}</span>
             {listing.isSellerVerified && (
               <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-full border border-emerald-300">
                 <CheckCircle2 className="w-3 h-3" />
@@ -83,7 +82,7 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
               </span>
             )}
             <span className="text-xs bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-medium ml-auto">
-              {getSellerTypeLabel(listing.sellerType)}
+              {posterLabelBn}
             </span>
           </div>
 
@@ -104,14 +103,14 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
           <div>
             <span className="text-xs text-slate-600 block uppercase font-semibold tracking-wide mb-0.5">পরিমাণ</span>
             <span className="text-lg font-black text-slate-900">
-              {listing.quantity.toLocaleString('bn-BD')} {listing.unitSymbolBn}
+              {formatQty(listing.quantity, listing.unitSymbolBn)}
             </span>
           </div>
-          
+
           <div className="text-right">
-            <span className="text-xs text-slate-600 block uppercase font-semibold tracking-wide mb-0.5">প্রতি ইউনিট দর</span>
+            <span className="text-xs text-slate-600 block uppercase font-semibold tracking-wide mb-0.5">{isDemand ? 'সর্বোচ্চ দাম' : 'প্রতি ইউনিট দর'}</span>
             <span className="text-xl font-black text-brand-700">
-              ৳{listing.expectedPricePerUnit.toLocaleString('bn-BD')}
+              {formatTaka(listing.expectedPricePerUnit)}
               <span className="text-xs font-medium text-slate-700"> /{listing.unitSymbolBn}</span>
             </span>
           </div>
@@ -121,32 +120,38 @@ export default function ListingCard({ listing, onContactClick, onViewClick }: Li
         <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
           <div className="flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            <span>পাওয়া যাবে: {listing.availableFrom}</span>
+            <span>পাওয়া যাবে: {formatDate(listing.availableFrom)}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-0.5">
               <Eye className="w-3.5 h-3.5 text-slate-400" />
-              {listing.viewCount}
+              {formatCount(listing.viewCount)}
             </span>
             <span className="flex items-center gap-0.5 text-brand-700 font-semibold">
               <Phone className="w-3.5 h-3.5" />
-              {listing.contactCount}
+              {formatCount(listing.contactCount)}
             </span>
           </div>
         </div>
 
         {/* ফোন বাটন — বড় ও সহজে চাপার জন্য বড় টাচ টার্গেট */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onContactClick(listing);
-          }}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-emerald-700 hover:from-brand-700 hover:to-emerald-800 text-white font-bold text-sm sm:text-base py-3.5 sm:py-4 px-4 rounded-xl shadow-md shadow-brand-600/20 active:scale-[0.98] transition-all mt-2"
-        >
-          <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span>কৃষককে ফোন দিন</span>
-        </button>
+        {canContact ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onContactClick(listing);
+            }}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-emerald-700 hover:from-brand-700 hover:to-emerald-800 text-white font-bold text-sm sm:text-base py-3.5 sm:py-4 px-4 rounded-xl shadow-md shadow-brand-600/20 active:scale-[0.98] transition-all mt-2"
+          >
+            <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>{isDemand ? 'ক্রেতাকে ফোন দিন' : `${posterLabelBn}কে ফোন দিন`}</span>
+          </button>
+        ) : (
+          <p className="w-full text-center text-sm font-semibold text-slate-600 bg-slate-100 border border-slate-200 py-3.5 px-4 rounded-xl mt-2">
+            শুধু দরের তথ্য
+          </p>
+        )}
       </div>
     </div>
   );

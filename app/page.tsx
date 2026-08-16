@@ -272,7 +272,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
             <h2 className="text-2xl font-black text-slate-900">
-              কেন "আমার আড়ত"?
+              কেন “আমার আড়ত”?
             </h2>
             <p className="text-slate-600 text-sm">
               সারা বাংলাদেশের তাজা কৃষি পণ্য দ্রুততম সময়ে খুঁজে নেওয়া ও কেনাবেচার সেরা মাধ্যম।

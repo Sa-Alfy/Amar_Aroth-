@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { SupplyListing } from '@/lib/mockData';
+import { SupplyListing, userTypeLabelBn } from '@/lib/mockData';
 import { revealPhone } from '@/lib/client/api';
+import { formatQty, formatTaka } from '@/lib/format';
 import { X, PhoneCall, CheckCircle2, MapPin, Package, Tag, ShieldCheck } from 'lucide-react';
 
 interface ContactModalProps {
@@ -44,8 +45,12 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
 
   if (!listing) return null;
 
+  // poster_user_type is server-owned; sellerType is the legacy mirror of it.
+  const posterLabelBn = userTypeLabelBn(listing.posterUserType ?? listing.sellerType);
+  const isDemand = listing.listingKind === 'demand';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative overflow-hidden">
         <button
           onClick={onClose}
@@ -62,17 +67,15 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
         <div className="space-y-4">
           <div>
             <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              {revealed?.sellerName ?? listing.sellerName}
+              {revealed?.sellerName ?? listing.sellerName ?? posterLabelBn}
               {(revealed?.isVerified ?? listing.isSellerVerified) && (
-                <span title="Verified Producer">
+                <span title="যাচাইকৃত">
                   <CheckCircle2 className="w-5 h-5 text-brand-600 fill-brand-100" />
                 </span>
               )}
             </h3>
             <p className="text-xs text-slate-500">
-              পরিচয়: <span className="font-medium text-slate-700">
-                {listing.sellerType === 'farmer' ? 'কৃষক' : listing.sellerType === 'aggregator' ? 'সংগ্রাহক' : 'সমবায়'}
-              </span>
+              পরিচয়: <span className="font-medium text-slate-700">{posterLabelBn}</span>
             </p>
           </div>
 
@@ -84,11 +87,11 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
             <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/60">
               <div className="flex items-center gap-1.5">
                 <Package className="w-3.5 h-3.5 text-brand-600" />
-                <span>{listing.quantity.toLocaleString()} {listing.unitSymbolBn}</span>
+                <span>{formatQty(listing.quantity, listing.unitSymbolBn)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Tag className="w-3.5 h-3.5 text-amber-600" />
-                <span className="font-bold text-slate-900">৳{listing.expectedPricePerUnit.toLocaleString()} /{listing.unitSymbolBn}</span>
+                <span className="font-bold text-slate-900">{formatTaka(listing.expectedPricePerUnit)} /{listing.unitSymbolBn}</span>
               </div>
             </div>
 
@@ -142,7 +145,9 @@ export default function ContactModal({ listing, onClose }: ContactModalProps) {
             )}
 
             <p className="text-[11px] text-slate-400">
-              দাম, পরিবহন সুবিধা এবং মূল্য পরিশোধের শর্ত সরাসরি কৃষকের সাথে ফোনে আলোচনা করুন।
+              {isDemand
+                ? `দাম, পরিমাণ ও পরিশোধের শর্ত ${posterLabelBn}ের সাথে ফোনে ঠিক করুন।`
+                : `দাম, পরিবহন ও পরিশোধের শর্ত ${posterLabelBn}ের সাথে ফোনে ঠিক করুন।`}
             </p>
           </div>
         </div>

@@ -47,14 +47,58 @@ export type ListingStatus =
   | 'banned'
   | 'disputed';
 
+/** Matches the profiles_user_type_check constraint in 0007_tier_model.sql. */
+export type UserType = 'farmer' | 'arathdar' | 'dokandar' | 'admin' | 'dealer' | 'aggregator' | 'cooperative';
+
+export type ListingKind = 'supply' | 'demand';
+
+/**
+ * A feed the session user is allowed to see, derived server-side from
+ * trade_permissions. Navigation is built from this list, never from a
+ * hardcoded role switch.
+ */
+export interface ListingFeed {
+  key: string;
+  labelBn: string;
+  kind: ListingKind;
+  posterUserType: string;
+}
+
+export const USER_TYPE_LABEL_BN: Record<string, string> = {
+  farmer: 'কৃষক',
+  arathdar: 'আড়তদার',
+  dokandar: 'দোকানদার',
+  dealer: 'ডিলার',
+  aggregator: 'সংগ্রাহক',
+  cooperative: 'সমবায়',
+  admin: 'প্রশাসক',
+};
+
+export function userTypeLabelBn(type: string | undefined | null): string {
+  if (!type) return 'বিক্রেতা';
+  return USER_TYPE_LABEL_BN[type] ?? 'বিক্রেতা';
+}
+
+/** Possessive form: কৃষক -> কৃষকের, আড়তদার -> আড়তদারের. */
+export function userTypePossessiveBn(type: string | undefined | null): string {
+  return `${userTypeLabelBn(type)}ের`;
+}
+
 export interface SupplyListing {
   id: string;
   createdByUserId: string;
   ownerUserId: string;
-  sellerName: string;
+  /** Absent when the viewer may not contact this poster — see canContact. */
+  sellerName?: string;
   sellerPhone?: string;
   isSellerVerified: boolean;
-  sellerType: 'farmer' | 'aggregator' | 'cooperative';
+  sellerType: UserType;
+
+  /** Server-owned, set by trigger. Trusted over any joined profile. */
+  posterUserType?: UserType;
+  listingKind?: ListingKind;
+  /** UI hint from trade_permissions. The reveal RPC is the real gate. */
+  canContact?: boolean;
   categoryId: number;
   categoryNameEn: string;
   categoryNameBn: string;

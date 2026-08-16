@@ -88,8 +88,8 @@ export default function PostSupplyPage() {
     setIsSubmitting(true);
     setSubmitError(null);
 
+    // No sellerId: the route takes identity from the session, never the body.
     const result = await createListing({
-      sellerId: currentUser?.id,
       categoryId,
       title,
       description,
