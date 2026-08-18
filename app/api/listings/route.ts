@@ -12,7 +12,8 @@ function isSupabaseConfigured(): boolean {
 }
 
 const VISIBLE_STATUSES = ['active', 'negotiating', 'reserved', 'sold'];
-const POSTER_TYPES = ['farmer', 'arathdar', 'dokandar', 'dealer', 'aggregator'];
+// mirrors the profiles.user_type check constraint (0010)
+const POSTER_TYPES = ['farmer', 'arathdar', 'dokandar'];
 
 interface TradePermission {
   buyer_type: string;
