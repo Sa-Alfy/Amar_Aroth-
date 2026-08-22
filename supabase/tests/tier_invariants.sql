@@ -3,10 +3,10 @@
 -- Run it in the SQL editor after any change to RLS, trade_permissions,
 -- profiles.user_type, or the listings visibility trigger.
 --
--- It impersonates one real account per tier by setting the same JWT claim
--- PostgREST sets, then counts what public.listings actually returns under
--- that identity. Nothing is written; the role and claims are transaction
--- local and revert on their own.
+-- It impersonates one real account per tier through app.user_id -- the same
+-- setting the identity adapter reads first -- then counts what public.listings
+-- actually returns under that identity. Nothing is written; the role and the
+-- setting are transaction local and revert on their own.
 --
 -- THE ASSERTION THAT MATTERS: dokandar -> farmer supply must be 0.
 -- Everything else is context for reading that number.
@@ -36,10 +36,9 @@ begin
     where user_type in ('farmer', 'arathdar', 'dokandar')
     order by user_type, is_verified desc, created_at
   loop
-    -- become this user, exactly as PostgREST would
-    perform set_config('request.jwt.claims',
-                       json_build_object('sub', v.id, 'role', 'authenticated')::text,
-                       true);
+    -- become this user via the portable identity setting (section 2 of the
+    -- schema); works on Supabase and on plain Postgres alike
+    perform set_config('app.user_id', v.id::text, true);
     perform set_config('role', 'authenticated', true);
 
     select

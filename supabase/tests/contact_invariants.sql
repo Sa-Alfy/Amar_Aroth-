@@ -48,9 +48,7 @@ begin
     return;
   end if;
 
-  perform set_config('request.jwt.claims',
-                     json_build_object('sub', v_dokandar, 'role', 'authenticated')::text,
-                     true);
+  perform set_config('app.user_id', v_dokandar::text, true);
   perform set_config('role', 'authenticated', true);
 
   -- THE ONE THAT MATTERS: a farmer's phone, requested directly by id.

@@ -244,12 +244,13 @@ insert into public.upazilas (id, district_id, name_en, name_bn) values
 on conflict (id) do nothing;
 
 -- 6. SEED DEMO PROFILES
-insert into public.profiles (id, phone, full_name, user_type, district_id, upazila_id, is_verified) values
-  ('11111111-1111-1111-1111-111111111111', '01711223344', 'মোঃ কাশেম আলী (Farmer Kashem)', 'farmer', 126, 1026, true),
-  ('22222222-2222-2222-2222-222222222222', '01899887766', 'আলহাজ্ব আব্দুর রহিম (Rahim Agro)', 'aggregator', 102, 1004, true),
-  ('33333333-3333-3333-3333-333333333333', '01655443322', 'সাতক্ষীরা মৎস্য সমবায় (Satkhira Fishery Coop)', 'farmer', 142, 1047, true),
-  ('44444444-4444-4444-4444-444444444444', '01733445566', 'হাজী জসিম উদ্দিন (Naogaon Grain Hub)', 'aggregator', 127, 1030, true),
-  ('55555555-5555-5555-5555-555555555555', '01911224455', 'আতাউর রহমান (Farmer Ataur)', 'farmer', 128, 1033, true)
+insert into public.profiles (id, phone, full_name, user_type, district_id, upazila_id, is_verified, kyc_status) values
+  ('11111111-1111-1111-1111-111111111111', '01711223344', 'মোঃ কাশেম আলী (Farmer Kashem)', 'farmer', 126, 1026, true, 'verified'),
+  ('22222222-2222-2222-2222-222222222222', '01899887766', 'আলহাজ্ব আব্দুর রহিম (Rahim Agro)', 'arathdar', 102, 1004, true, 'verified'),
+  ('33333333-3333-3333-3333-333333333333', '01655443322', 'সাতক্ষীরা মৎস্য সমবায় (Satkhira Fishery Coop)', 'farmer', 142, 1047, true, 'verified'),
+  ('44444444-4444-4444-4444-444444444444', '01733445566', 'হাজী জসিম উদ্দিন (Naogaon Grain Hub)', 'arathdar', 127, 1030, true, 'verified'),
+  ('55555555-5555-5555-5555-555555555555', '01911224455', 'আতাউর রহমান (Farmer Ataur)', 'farmer', 128, 1033, true, 'verified'),
+  ('66666666-6666-6666-6666-666666666666', '01566778899', 'মেসার্স সেলিম স্টোর (Selim Store)', 'dokandar', 102, 1002, true, 'verified')
 on conflict (id) do nothing;
 
 -- 7. SEED REALISTIC SUPPLY LISTINGS
