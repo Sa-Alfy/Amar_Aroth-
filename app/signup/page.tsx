@@ -105,13 +105,38 @@ function NidPhotoUpload({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // A phone camera shot is 3-8MB, which is both slow on mobile data and larger
+  // than the server accepts. Downscale to 1600px on the long edge before the
+  // data URL is built; an NID stays readable well below that.
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (ev) => {
-      onChange(ev.target?.result as string);
+      const original = ev.target?.result as string;
+      const image = new Image();
+
+      image.onload = () => {
+        const MAX_EDGE = 1600;
+        const scale = Math.min(1, MAX_EDGE / Math.max(image.width, image.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+
+        const context = canvas.getContext('2d');
+        if (!context) { onChange(original); return; }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        onChange(canvas.toDataURL('image/jpeg', 0.82));
+      };
+
+      // Unreadable file: send it as-is and let the server reject it with a
+      // message the user can act on.
+      image.onerror = () => onChange(original);
+      image.src = original;
     };
+
     reader.readAsDataURL(file);
   };
 
@@ -295,6 +320,8 @@ export default function SignupPage() {
   };
 
   const handleProceedToDashboard = () => {
+    // The signup route signs the user in; refresh so Server Components see the session.
+    router.refresh();
     if (role === 'farmer') router.push('/account');
     else if (role === 'arathdar' || role === 'dokandar') router.push('/browse');
     else router.push('/');

@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { CATEGORIES, BANGLADESH_LOCATIONS, SupplyListing, ListingStatus, Category, LocationDivision } from '@/lib/mockData';
-import { fetchListings, fetchCategories, fetchLocations } from '@/lib/client/api';
+import { CATEGORIES, BANGLADESH_LOCATIONS, SupplyListing, ListingStatus, Category, LocationDivision, ListingFeed } from '@/lib/mockData';
+import { fetchListingIndex, fetchCategories, fetchLocations } from '@/lib/client/api';
 import ListingCard from '@/components/ListingCard';
 import ContactModal from '@/components/ContactModal';
 import { Search, Filter, RefreshCw, SlidersHorizontal, MapPin, Check, X } from 'lucide-react';
@@ -24,6 +24,12 @@ function BrowseContent() {
   const [sortBy, setSortBy] = useState<'newest' | 'price_low' | 'price_high' | 'quantity_high'>('newest');
   
   const [listings, setListings] = useState<SupplyListing[]>([]);
+  // Feeds come from the server, derived from trade_permissions. Never a role
+  // switch in component code — which tiers a viewer may see is data, not UI logic.
+  const [feeds, setFeeds] = useState<ListingFeed[]>([]);
+  // The whole feed, not just its key: the fetch effect reads kind and
+  // posterUserType off it, so it must not depend on the feeds array itself.
+  const [activeFeed, setActiveFeed] = useState<ListingFeed | null>(null);
   const [categories, setCategories] = useState<Category[]>(CATEGORIES);
   const [locations, setLocations] = useState<LocationDivision[]>(BANGLADESH_LOCATIONS);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,17 +52,27 @@ function BrowseContent() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(true);
-      fetchListings({
+      fetchListingIndex({
         categoryId: selectedCategory,
         districtId: selectedDistrict,
         searchQuery,
+        kind: activeFeed?.kind ?? null,
+        posterType: activeFeed?.posterUserType ?? null,
       })
-        .then(setListings)
+        .then((index) => {
+          setListings(index.listings);
+          setFeeds(index.feeds);
+          // Drop the active tab if a permission change removed it. Fall back to
+          // "all", never to a hardcoded tier.
+          setActiveFeed((current) =>
+            current && index.feeds.some((feed) => feed.key === current.key) ? current : null
+          );
+        })
         .finally(() => setIsLoading(false));
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [selectedCategory, selectedDistrict, searchQuery]);
+  }, [selectedCategory, selectedDistrict, searchQuery, activeFeed]);
 
   // Available districts based on selected division
   const availableDistricts = useMemo(() => {
@@ -135,6 +151,41 @@ function BrowseContent() {
             <span>ফিল্টার করুন ({filteredListings.length})</span>
           </button>
         </div>
+
+        {/* FEED TABS — built from trade_permissions on the server, never hardcoded.
+            A farmer sees peer prices, an arathdar sees farmer + arathdar supply,
+            a dokandar sees arathdar supply only. Horizontal scroll keeps Bangla
+            labels from overflowing at 360px. */}
+        {feeds.length > 0 && (
+          <div className="mb-4 -mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+            <div className="flex items-center gap-2 w-max pb-1">
+              <button
+                onClick={() => setActiveFeed(null)}
+                className={`whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                  activeFeed === null
+                    ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                সবগুলো
+              </button>
+
+              {feeds.map((feed) => (
+                <button
+                  key={feed.key}
+                  onClick={() => setActiveFeed(feed)}
+                  className={`whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                    activeFeed?.key === feed.key
+                      ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {feed.labelBn}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* TOP SEARCH & SORT BAR */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6 flex flex-col sm:flex-row items-center gap-4">

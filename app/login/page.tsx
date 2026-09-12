@@ -3,215 +3,61 @@
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { login, requestPasswordResetOtp, verifyOtpAndResetPassword } from '@/lib/client/api';
+import { login } from '@/lib/client/api';
 import {
   Store, Phone, Lock, Eye, EyeOff, ShieldCheck,
-  X, MessageSquare, KeyRound, CheckCircle2, ArrowLeft,
-  Loader2, LogIn, ArrowRight
+  X, KeyRound, Loader2, LogIn, ArrowRight
 } from 'lucide-react';
 
-// ─── FORGOT PASSWORD MODAL ────────────────────────────────────────────────────
+// ─── FORGOT PASSWORD NOTICE ───────────────────────────────────────────────────
+// Password reset is not built yet. This used to be a 4-step OTP flow that
+// verified a hardcoded '1234' and changed nothing, so users believed their PIN
+// was reset and then could not log in. An honest dead end beats a fake success.
 
 function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '']);
-  const [newPin, setNewPin] = useState('');
-  const [showPin, setShowPin] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  const handleSendOtp = async () => {
-    setError(null);
-    if (!phone || phone.trim().length < 11) {
-      setError('সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন');
-      return;
-    }
-    setIsLoading(true);
-    const res = await requestPasswordResetOtp(phone);
-    setIsLoading(false);
-    if (!res.success) { setError(res.error || 'OTP পাঠানো যায়নি'); return; }
-    setStep(2);
-  };
-
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const next = [...otp];
-    next[index] = value.slice(-1);
-    setOtp(next);
-    if (value && index < 3) otpRefs.current[index + 1]?.focus();
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    setError(null);
-    const code = otp.join('');
-    if (code.length < 4) { setError('৪ ডিজিটের OTP কোড দিন'); return; }
-    if (!newPin || newPin.length < 6) { setError('নতুন পিন/পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে'); return; }
-    setIsLoading(true);
-    const res = await verifyOtpAndResetPassword(phone, code, newPin);
-    setIsLoading(false);
-    if (!res.success) { setError(res.error || 'যাচাই ব্যর্থ হয়েছে'); return; }
-    setStep(3);
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative w-full sm:max-w-sm bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom duration-300">
-        {/* Header */}
+      <div className="relative w-full sm:max-w-sm bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <KeyRound className="w-5 h-5 text-emerald-700" />
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center">
+              <KeyRound className="w-5 h-5 text-amber-700" />
             </div>
-            <div>
-              <p className="text-sm font-black text-slate-900">পাসওয়ার্ড রিসেট</p>
-              <p className="text-[11px] text-slate-400">SMS OTP দিয়ে যাচাই করুন</p>
-            </div>
+            <h2 className="text-base font-black text-slate-900">পাসওয়ার্ড ভুলে গেছেন?</h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
-            <X className="w-4 h-4 text-slate-600" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="বন্ধ করুন"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
-          {/* Step 1: Phone */}
-          {step === 1 && (
-            <>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                আপনার রেজিস্টার্ড মোবাইল নম্বরে একটি ৪ ডিজিটের OTP পাঠানো হবে।
-              </p>
-              <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
-                  <Phone className="w-4 h-4 text-slate-500" />
-                  <span>মোবাইল নম্বর</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    placeholder="01711223344"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-mono tracking-wide"
-                  />
-                </div>
-              </div>
-              {error && <p className="text-xs text-red-600 text-center bg-red-50 rounded-xl p-2.5">{error}</p>}
-              <button
-                onClick={handleSendOtp}
-                disabled={isLoading}
-                className="w-full btn-primary bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors text-sm shadow-lg shadow-emerald-600/30"
-              >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <MessageSquare className="w-5 h-5 text-white" />}
-                <span className="text-white font-bold">{isLoading ? 'পাঠানো হচ্ছে...' : 'OTP পাঠান'}</span>
-              </button>
-            </>
-          )}
+          <p className="text-sm text-slate-700 leading-relaxed">
+            পাসওয়ার্ড রিসেট সুবিধা এখনো চালু হয়নি। আপনার নম্বরে এসএমএস কোড পাঠানোর ব্যবস্থা
+            তৈরি হলে এই সুবিধা যুক্ত হবে।
+          </p>
+          <p className="text-sm text-slate-700 leading-relaxed">
+            এখন পাসওয়ার্ড পরিবর্তন করতে আমার আড়ত সহায়তা কেন্দ্রে যোগাযোগ করুন।
+          </p>
 
-          {/* Step 2: OTP + New PIN */}
-          {step === 2 && (
-            <>
-              <div className="text-center">
-                <p className="text-sm text-slate-600">
-                  <span className="font-bold text-slate-900">{phone}</span> নম্বরে OTP পাঠানো হয়েছে
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">(ডেমো মোড: OTP হলো 1234)</p>
-              </div>
-
-              {/* OTP Input */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-2 text-center">OTP কোড লিখুন</label>
-                <div className="flex gap-3 justify-center">
-                  {otp.map((digit, i) => (
-                    <input
-                      key={i}
-                      ref={(el) => { otpRefs.current[i] = el; }}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpChange(i, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                      className="w-14 h-14 text-center text-2xl font-black rounded-2xl border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:outline-none bg-slate-50 transition-all"
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* New PIN */}
-              <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
-                  <Lock className="w-4 h-4 text-slate-500" />
-                  <span>নতুন পিন / পাসওয়ার্ড সেট করুন</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPin ? 'text' : 'password'}
-                    inputMode="numeric"
-                    placeholder="কমপক্ষে ৬ অক্ষর"
-                    value={newPin}
-                    onChange={(e) => setNewPin(e.target.value)}
-                    className="w-full px-4 pr-11 py-3.5 rounded-2xl border border-slate-200 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-mono tracking-widest"
-                  />
-                  <button type="button" onClick={() => setShowPin(!showPin)} className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700">
-                    {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {error && <p className="text-xs text-red-600 text-center bg-red-50 rounded-xl p-2.5">{error}</p>}
-              <div className="flex gap-3">
-                <button onClick={() => setStep(1)} className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3.5 rounded-2xl flex items-center justify-center gap-1.5 text-sm">
-                  <ArrowLeft className="w-4 h-4" />ফিরুন
-                </button>
-                <button
-                  onClick={handleVerifyOtp}
-                  disabled={isLoading}
-                  className="flex-1 btn-primary bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 text-sm shadow-lg shadow-emerald-600/30"
-                >
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <ShieldCheck className="w-5 h-5 text-white" />}
-                  <span className="text-white font-bold">{isLoading ? 'যাচাই হচ্ছে...' : 'পাসওয়ার্ড সেট করুন'}</span>
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* Step 3: Success */}
-          {step === 3 && (
-            <div className="text-center space-y-4 py-4">
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-10 h-10 text-emerald-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-slate-900">পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!</h3>
-                <p className="text-sm text-slate-500 mt-1">এখন নতুন পিন দিয়ে লগইন করুন।</p>
-              </div>
-              <button
-                onClick={onClose}
-                className="w-full btn-primary bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-2xl text-sm shadow-lg shadow-emerald-600/30"
-              >
-                <span className="text-white font-bold">লগইন পেজে ফিরুন</span>
-              </button>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-3.5 rounded-2xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
+          >
+            বুঝেছি
+          </button>
         </div>
       </div>
     </div>
   );
 }
-
-// ─── MAIN LOGIN PAGE ──────────────────────────────────────────────────────────
 
 export default function LoginPage() {
   const router = useRouter();
@@ -234,6 +80,9 @@ export default function LoginPage() {
       setErrorMessage(res.error || 'লগইন ব্যর্থ হয়েছে। নম্বর ও পাসওয়ার্ড পরীক্ষা করুন।');
       return;
     }
+
+    // Refresh the RSC cache first, otherwise Server Components render as logged out.
+    router.refresh();
 
     const userType = res.user.userType;
     if (userType === 'farmer') {

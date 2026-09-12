@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { INITIAL_LISTINGS, type ListingFeed } from '@/lib/mockData';
-
-// Helper to check if Supabase is configured
-function isSupabaseConfigured(): boolean {
-  return (
-    typeof process.env.NEXT_PUBLIC_SUPABASE_URL === 'string' &&
-    process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith('https://') &&
-    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co'
-  );
-}
+import { type ListingFeed } from '@/lib/mockData';
 
 const VISIBLE_STATUSES = ['active', 'negotiating', 'reserved', 'sold'];
 // mirrors the profiles.user_type check constraint (0010)
@@ -160,34 +151,6 @@ export async function GET(request: NextRequest) {
   const kind = kindParam === 'supply' || kindParam === 'demand' ? kindParam : null;
   const posterType = posterTypeParam && POSTER_TYPES.includes(posterTypeParam) ? posterTypeParam : null;
 
-  if (!isSupabaseConfigured()) {
-    if (mine) {
-      return NextResponse.json({ success: false, error: 'Supabase not configured' }, { status: 503 });
-    }
-
-    let results = [...INITIAL_LISTINGS];
-    if (categoryId) results = results.filter((item) => item.categoryId === Number(categoryId));
-    if (districtId) results = results.filter((item) => item.districtId === Number(districtId));
-    if (search) {
-      const q = search.toLowerCase();
-      results = results.filter(
-        (item) =>
-          item.title.toLowerCase().includes(q) ||
-          item.districtNameEn.toLowerCase().includes(q) ||
-          item.districtNameBn.includes(q) ||
-          item.categoryNameEn.toLowerCase().includes(q) ||
-          item.categoryNameBn.includes(q)
-      );
-    }
-    return NextResponse.json({
-      success: true,
-      source: 'fixture',
-      listings: results,
-      feeds: deriveFeeds(null, []),
-      viewerUserType: null,
-    });
-  }
-
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -313,10 +276,6 @@ export async function GET(request: NextRequest) {
  * Create a new listing with fraud engine integration.
  */
 export async function POST(request: NextRequest) {
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ success: false, error: 'Supabase not configured' }, { status: 503 });
-  }
-
   try {
     const supabase = await createClient();
 
@@ -331,7 +290,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'ভাল ডাটা পাঠাননি' }, { status: 400 });
     }
 
-    const { categoryId, title, description, quantity, unitId, expectedPrice, divisionId, districtId, upazilaId, specificLocation, imageUrls } = body;
+    const { categoryId, title, description, quantity, unitId, expectedPrice, divisionId, districtId, upazilaId, specificLocation, imageUrls, listingKind } = body;
 
     const isPositiveInt = (value: unknown) => Number.isInteger(value) && Number(value) > 0;
     const isNonNegativeNumber = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0;
@@ -351,15 +310,22 @@ export async function POST(request: NextRequest) {
     if (imageUrls !== undefined && (!Array.isArray(imageUrls) || imageUrls.length > 5 || imageUrls.some((url: unknown) => typeof url !== 'string' || !/^https:\/\//i.test(url)))) {
       return NextResponse.json({ success: false, error: 'ছবির লিংক ৫টির বেশি নয়, HTTPS লিঙ্ক হতে হবে' }, { status: 400 });
     }
+    if (listingKind !== undefined && listingKind !== 'supply' && listingKind !== 'demand') {
+      return NextResponse.json({ success: false, error: 'লিস্টিংয়ের ধরন সঠিক নয়' }, { status: 400 });
+    }
 
+    // A profile row must exist, but is_verified is NOT a posting gate: a farmer
+    // may post the day they sign up. Verification is a trust badge on the card
+    // (isSellerVerified), not permission to trade. Phone reveal still gates on it.
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('is_verified')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile || profile.is_verified === false) {
-      return NextResponse.json({ success: false, error: 'আপনার প্রোফাইল যাচাইকৃত না হওয়ায় লিস্টিং পোস্ট করা যাবে না' }, { status: 403 });
+    if (profileError || !profile) {
+      console.error('[api/listings] profile lookup failed for', user.id, profileError);
+      return NextResponse.json({ success: false, error: 'আপনার প্রোফাইল পাওয়া যায়নি' }, { status: 403 });
     }
 
     // Log device footprint
@@ -376,7 +342,9 @@ export async function POST(request: NextRequest) {
 
     // Ignore sellerId from the request body. Agent-on-behalf-of posting will need a seller_agents table
     // plus an authorization check before sellerId can ever be honored.
-    // listing_kind, poster_user_type and is_public are server-owned — set by trigger, never sent here.
+    // poster_user_type and is_public are server-owned — set by trigger, never sent here.
+    // listing_kind is different: the trigger only preserves it on UPDATE, so an INSERT that
+    // omits it always falls back to the 'supply' default and no demand row can ever exist.
     const { data: listingData, error: listingError } = await supabase
       .from('listings')
       .insert({
@@ -392,13 +360,15 @@ export async function POST(request: NextRequest) {
         district_id: Number(districtId),
         upazila_id: Number(upazilaId),
         specific_location: specificLocation || null,
+        listing_kind: listingKind === 'demand' ? 'demand' : 'supply',
         status: 'active',
       })
       .select('id, status')
       .single();
 
     if (listingError || !listingData) {
-      return NextResponse.json({ success: false, error: listingError?.message || 'Failed to create listing' }, { status: 400 });
+      console.error('[api/listings] insert failed:', listingError);
+      return NextResponse.json({ success: false, error: 'লিস্টিং তৈরি করা যায়নি। আবার চেষ্টা করুন।' }, { status: 400 });
     }
 
     const listingId = listingData.id;

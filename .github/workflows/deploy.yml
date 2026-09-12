@@ -22,5 +22,12 @@ jobs:
       - name: Type-check
         run: npx tsc --noEmit
 
+      # Dummy values only. The build never reaches Supabase, but the client
+      # factories now throw when these are absent instead of falling back to a
+      # placeholder URL that made a misconfigured deploy look healthy.
       - name: Build app
         run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: ci-service-role-key
