@@ -53,6 +53,22 @@ The repository follows a clean, 2-branch model:
 
 ---
 
+## 🔑 Environment Variables
+
+Three are required. The app **fails loudly** when any is missing — there is no placeholder
+fallback, because a misconfigured deploy that quietly serves fixture data is worse than one
+that refuses to start.
+
+| Variable | Where it is used | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | client + server | e.g. `https://<project-ref>.supabase.co`, no trailing slash |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | client + server | user-scoped requests; RLS applies |
+| `SUPABASE_SERVICE_ROLE_KEY` | **server only** | bypasses RLS — never prefix it `NEXT_PUBLIC_` |
+
+Copy `.env.example` to `.env.local` and fill it in. `.env*.local` is gitignored.
+
+---
+
 ## 🚀 Getting Started Locally
 
 ```bash
@@ -63,6 +79,9 @@ cd Amar_Aroth-
 # Install dependencies
 npm install
 
+# Configure environment (see the table above)
+cp .env.example .env.local
+
 # Run development server
 npm run dev
 ```
@@ -71,13 +90,71 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
+## 🗄️ Database Setup
+
+Apply the migrations in `supabase/migrations/` **in numeric order** through the Supabase SQL
+editor. They are never edited once applied; a change means a new numbered file.
+
+| File | What it does |
+|---|---|
+| `0001_schema.sql` | the whole schema: tables, RLS, grants, triggers, `SECURITY DEFINER` helpers |
+| `0002_lock_append_only_ledgers.sql` | author checks on `user_device_logs` and `listing_events` |
+| `0003_profile_nid_documents.sql` | `profiles.nid_front_url` / `nid_back_url` |
+
+Then `supabase/seed.sql` for reference data (categories, units, the 64-district location tree).
+
+**Storage:** create a **private** bucket named `kyc-documents` (5 MB limit, `image/jpeg`,
+`image/png`, `image/webp`). Signup uploads the NID photos there and stores only the object
+path on the profile. The `listing-images` bucket is public by design; this one must not be.
+
+**Auth settings:** Authentication → Providers → Email must be **enabled**, and *Confirm email*
+**off**. Login addresses are synthetic (`{phone}@amararoth.com`) and can never receive a
+confirmation link, so accounts are created server-side with `email_confirm: true`.
+
+### Invariant tests
+
+Not migrations — repeatable proofs. Run both after any change to RLS, `trade_permissions`,
+`profiles.user_type`, or the listing visibility trigger:
+
+```
+supabase/tests/tier_invariants.sql      -- expect: dokandar sees 0 farmer supply listings
+supabase/tests/contact_invariants.sql   -- expect: tier_blocked, plus the control returning ok
+```
+
+A schema change without a passing invariant run is not finished.
+
+---
+
+## 🔐 The Tier Rule
+
+Who may see and contact whom is **data, not code** — it lives in the `trade_permissions`
+table, and navigation feeds are derived from it on the server. There is deliberately no
+`dokandar → farmer` row: a shopkeeper must not reach a farmer directly. That absence is the
+product's core constraint, enforced twice — by RLS for visibility, and by
+`reveal_seller_phone_number` for contact, which logs a `tier_violation` when it blocks one.
+
+Never hardcode a role name in a policy or a component. Add a row instead.
+
+---
+
 ## 📦 Build Verification
 
-To verify production compilation and TypeScript checks:
-
 ```bash
-npm run build
+npm run verify     # tsc --noEmit && eslint && next build
 ```
+
+---
+
+## ⚠️ Known Gaps
+
+* **Password reset is not implemented.** The UI says so plainly rather than faking success.
+  A real one needs an SMS provider for the OTP plus a server route calling
+  `auth.admin.updateUserById`.
+* **NID verification is a stub.** The signup step shows a checkmark; nothing is verified.
+* **KYC has no review screen yet.** `is_verified` no longer gates posting — it is a trust
+  badge, and phone reveal still enforces it — but an admin must flip it by hand.
+* **No rate limiting on `/api/auth/login`**, and signup distinguishes "already registered"
+  from other failures, which makes it a phone-number oracle. Address both before launch.
 
 ---
 
