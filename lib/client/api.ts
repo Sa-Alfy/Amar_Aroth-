@@ -295,8 +295,14 @@ export async function fetchUnits(): Promise<MeasurementUnit[]> {
 
 // ─── ADMIN: MODERATION ────────────────────────────────────────────────────────
 
-export async function fetchModerationData(type: 'all' | 'kyc' | 'listings' | 'alerts' = 'all') {
-  const res = await fetch(`/api/admin/moderation?type=${type}`);
+export async function fetchModerationData(
+  type: 'all' | 'kyc' | 'listings' | 'alerts' = 'all',
+  /** KYC only: which review state to list. */
+  status?: 'pending' | 'verified' | 'rejected'
+) {
+  const params = new URLSearchParams({ type });
+  if (status) params.set('status', status);
+  const res = await fetch(`/api/admin/moderation?${params.toString()}`);
   return res.json();
 }
 

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { KYC_BUCKET } from '@/lib/server/kycUpload';
 
 /**
  * GET /api/admin/moderation
@@ -83,28 +85,77 @@ export async function GET(request: NextRequest) {
       }));
     }
 
-    // 4. Fetch pending KYC users
+    // 4. Fetch the KYC queue.
+    //
+    //    An admin reviewing an identity document needs the document. The NID
+    //    number is returned in full here — masking it makes the queue useless,
+    //    and this branch is already behind the admin check above. The photos
+    //    live in a private bucket, so they come back as short-lived signed URLs
+    //    minted with the service role client; the bucket itself stays closed.
     if (queryType === 'kyc' || queryType === 'all') {
-      const { data: kycUsers, error: kycError } = await supabase
+      const statusFilter = searchParams.get('status') || 'pending';
+
+      let kycQuery = supabase
         .from('profiles')
-        .select('id, full_name, phone, user_type, nid_number, district_id, upazila_id, created_at')
-        .eq('is_verified', false)
+        .select(`
+          id, full_name, phone, user_type, nid_number, address, risk_score,
+          is_verified, nid_verified, kyc_status, created_at,
+          nid_front_url, nid_back_url,
+          districts (name_en, name_bn),
+          upazilas (name_en, name_bn)
+        `)
         .order('created_at', { ascending: false })
         .limit(50);
+
+      if (statusFilter === 'pending') kycQuery = kycQuery.eq('kyc_status', 'pending');
+      else if (statusFilter === 'verified') kycQuery = kycQuery.eq('kyc_status', 'verified');
+      else if (statusFilter === 'rejected') kycQuery = kycQuery.eq('kyc_status', 'rejected');
+
+      const { data: kycUsers, error: kycError } = await kycQuery;
 
       if (kycError) {
         console.error('[moderation] KYC query error:', kycError.message);
       }
 
-      result.kycUsers = (kycUsers || []).map((row: any) => ({
+      const rows = (kycUsers || []) as any[];
+      const paths = rows.flatMap((row) => [row.nid_front_url, row.nid_back_url]).filter(Boolean);
+      const signedByPath: Record<string, string> = {};
+
+      if (paths.length > 0) {
+        const admin = createAdminClient();
+        // 10 minutes: long enough to review a queue, short enough that a copied
+        // link is worthless by the time it leaves the building.
+        const { data: signed, error: signError } = await admin.storage
+          .from(KYC_BUCKET)
+          .createSignedUrls(paths, 600);
+
+        if (signError) {
+          console.error('[moderation] Signing NID URLs failed:', signError.message);
+        }
+        for (const entry of signed || []) {
+          if (entry.path && entry.signedUrl) signedByPath[entry.path] = entry.signedUrl;
+        }
+      }
+
+      result.kycUsers = rows.map((row) => ({
         id: row.id,
         fullName: row.full_name,
         phone: row.phone,
         userType: row.user_type,
-        nidNumber: row.nid_number ? `****${row.nid_number.slice(-4)}` : null,
-        districtId: row.district_id,
-        upazilaId: row.upazila_id,
+        nidNumber: row.nid_number || null,
+        address: row.address || null,
+        districtName: row.districts?.name_bn || row.districts?.name_en || null,
+        upazilaName: row.upazilas?.name_bn || row.upazilas?.name_en || null,
+        riskScore: row.risk_score ?? 0,
+        isVerified: Boolean(row.is_verified),
+        nidVerified: Boolean(row.nid_verified),
+        kycStatus: row.kyc_status,
         createdAt: row.created_at,
+        // Absent when the account predates NID storage, which the UI must show
+        // rather than hide — an empty frame is a reason not to approve.
+        nidFrontImageUrl: row.nid_front_url ? signedByPath[row.nid_front_url] || null : null,
+        nidBackImageUrl: row.nid_back_url ? signedByPath[row.nid_back_url] || null : null,
+        hasDocuments: Boolean(row.nid_front_url && row.nid_back_url),
       }));
     }
 
@@ -200,7 +251,8 @@ export async function PATCH(request: NextRequest) {
           .select('id');
 
         if (error) {
-          return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+          console.error(`[moderation] ${action} failed:`, error);
+          return NextResponse.json({ success: false, error: 'পরিবর্তন সংরক্ষণ করা যায়নি।' }, { status: 400 });
         }
         if (!data || data.length === 0) {
           return NextResponse.json({ success: false, error: 'No matching flagged listing was updated.' }, { status: 404 });
@@ -220,7 +272,8 @@ export async function PATCH(request: NextRequest) {
           .select('id');
 
         if (error) {
-          return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+          console.error(`[moderation] ${action} failed:`, error);
+          return NextResponse.json({ success: false, error: 'পরিবর্তন সংরক্ষণ করা যায়নি।' }, { status: 400 });
         }
         if (!data || data.length === 0) {
           return NextResponse.json({ success: false, error: 'No matching listing was updated.' }, { status: 404 });
@@ -240,7 +293,8 @@ export async function PATCH(request: NextRequest) {
           .select('id');
 
         if (error) {
-          return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+          console.error(`[moderation] ${action} failed:`, error);
+          return NextResponse.json({ success: false, error: 'পরিবর্তন সংরক্ষণ করা যায়নি।' }, { status: 400 });
         }
         if (!data || data.length === 0) {
           return NextResponse.json({ success: false, error: 'No matching alert was updated.' }, { status: 404 });
@@ -260,7 +314,8 @@ export async function PATCH(request: NextRequest) {
           .select('id');
 
         if (error) {
-          return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+          console.error(`[moderation] ${action} failed:`, error);
+          return NextResponse.json({ success: false, error: 'পরিবর্তন সংরক্ষণ করা যায়নি।' }, { status: 400 });
         }
         if (!data || data.length === 0) {
           return NextResponse.json({ success: false, error: 'No matching alert was updated.' }, { status: 404 });
@@ -273,14 +328,23 @@ export async function PATCH(request: NextRequest) {
         if (!userId) {
           return NextResponse.json({ success: false, error: 'Missing userId.' }, { status: 400 });
         }
+        // kyc_status must move with is_verified. Leaving it 'pending' kept an
+        // approved user in the queue forever and made the filter meaningless.
         const { data, error } = await supabase
           .from('profiles')
-          .update({ is_verified: true, nid_verified: true })
+          .update({
+            is_verified: true,
+            nid_verified: true,
+            kyc_status: 'verified',
+            kyc_reviewed_by: user.id,
+            kyc_reviewed_at: new Date().toISOString(),
+          })
           .eq('id', userId)
           .select('id');
 
         if (error) {
-          return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+          console.error(`[moderation] ${action} failed:`, error);
+          return NextResponse.json({ success: false, error: 'পরিবর্তন সংরক্ষণ করা যায়নি।' }, { status: 400 });
         }
         if (!data || data.length === 0) {
           return NextResponse.json({ success: false, error: 'No matching profile was updated.' }, { status: 404 });
@@ -295,12 +359,19 @@ export async function PATCH(request: NextRequest) {
         }
         const { data, error } = await supabase
           .from('profiles')
-          .update({ is_verified: false, nid_verified: false })
+          .update({
+            is_verified: false,
+            nid_verified: false,
+            kyc_status: 'rejected',
+            kyc_reviewed_by: user.id,
+            kyc_reviewed_at: new Date().toISOString(),
+          })
           .eq('id', userId)
           .select('id');
 
         if (error) {
-          return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+          console.error(`[moderation] ${action} failed:`, error);
+          return NextResponse.json({ success: false, error: 'পরিবর্তন সংরক্ষণ করা যায়নি।' }, { status: 400 });
         }
         if (!data || data.length === 0) {
           return NextResponse.json({ success: false, error: 'No matching profile was updated.' }, { status: 404 });
@@ -320,12 +391,92 @@ export async function PATCH(request: NextRequest) {
           .select('id');
 
         if (error) {
-          return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+          console.error(`[moderation] ${action} failed:`, error);
+          return NextResponse.json({ success: false, error: 'পরিবর্তন সংরক্ষণ করা যায়নি।' }, { status: 400 });
         }
         if (!data || data.length === 0) {
           return NextResponse.json({ success: false, error: 'No matching profile was updated.' }, { status: 404 });
         }
         return NextResponse.json({ success: true, message: `Risk score updated to ${riskScore}.` });
+      }
+
+      case 'reset_kyc': {
+        // Back to the queue: the documents were unreadable, not fraudulent.
+        const { userId } = body;
+        if (!userId) {
+          return NextResponse.json({ success: false, error: 'Missing userId.' }, { status: 400 });
+        }
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({ is_verified: false, nid_verified: false, kyc_status: 'pending' })
+          .eq('id', userId)
+          .select('id');
+
+        if (error) {
+          console.error('[moderation] reset_kyc failed:', error);
+          return NextResponse.json({ success: false, error: 'পরিবর্তন সংরক্ষণ করা যায়নি।' }, { status: 400 });
+        }
+        if (!data || data.length === 0) {
+          return NextResponse.json({ success: false, error: 'No matching profile was updated.' }, { status: 404 });
+        }
+        return NextResponse.json({ success: true, message: 'Moved back to the pending queue.' });
+      }
+
+      case 'set_user_type': {
+        // Tier corrections only. 'admin' is deliberately not settable here —
+        // minting an admin stays a service-role operation run by a human.
+        const { userId, userType } = body;
+        const ALLOWED = ['farmer', 'arathdar', 'dokandar'];
+
+        if (!userId || typeof userType !== 'string' || !ALLOWED.includes(userType)) {
+          return NextResponse.json({ success: false, error: 'ব্যবহারকারীর ধরন সঠিক নয়।' }, { status: 400 });
+        }
+        if (userId === user.id) {
+          return NextResponse.json({ success: false, error: 'নিজের ধরন পরিবর্তন করা যাবে না।' }, { status: 400 });
+        }
+
+        const { data: target } = await supabase
+          .from('profiles').select('user_type').eq('id', userId).single();
+
+        if (target?.user_type === 'admin') {
+          return NextResponse.json({ success: false, error: 'অ্যাডমিনের ধরন এখান থেকে বদলানো যাবে না।' }, { status: 403 });
+        }
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({ user_type: userType })
+          .eq('id', userId)
+          .select('id');
+
+        if (error) {
+          console.error('[moderation] set_user_type failed:', error);
+          return NextResponse.json({ success: false, error: 'পরিবর্তন সংরক্ষণ করা যায়নি।' }, { status: 400 });
+        }
+        if (!data || data.length === 0) {
+          return NextResponse.json({ success: false, error: 'No matching profile was updated.' }, { status: 404 });
+        }
+        return NextResponse.json({ success: true, message: `User type set to ${userType}.` });
+      }
+
+      case 'suspend_listings': {
+        // Pull everything a user has posted out of the feeds at once. Used when
+        // the account is the problem rather than one listing.
+        const { userId } = body;
+        if (!userId) {
+          return NextResponse.json({ success: false, error: 'Missing userId.' }, { status: 400 });
+        }
+        const { data, error } = await supabase
+          .from('listings')
+          .update({ status: 'suspended', updated_at: new Date().toISOString() })
+          .eq('seller_id', userId)
+          .in('status', ['active', 'negotiating', 'reserved', 'flagged_review'])
+          .select('id');
+
+        if (error) {
+          console.error('[moderation] suspend_listings failed:', error);
+          return NextResponse.json({ success: false, error: 'লিস্টিং স্থগিত করা যায়নি।' }, { status: 400 });
+        }
+        return NextResponse.json({ success: true, message: `${(data || []).length} listing(s) suspended.` });
       }
 
       default:
