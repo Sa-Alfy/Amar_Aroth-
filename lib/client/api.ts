@@ -32,6 +32,15 @@ export function normalizePhone(phone: string): string {
   return digits;
 }
 
+/**
+ * A Bangladeshi mobile number, already normalized: 11 digits, 01, operator digit 3-9.
+ * normalizePhone returns whatever digits it got when no prefix rule matches, so a
+ * length check alone lets a 12-digit number through.
+ */
+export function isValidBdPhone(normalizedPhone: string): boolean {
+  return /^01[3-9]\d{8}$/.test(normalizedPhone || '');
+}
+
 export interface UserProfile {
   id: string;
   phone: string;
@@ -62,41 +71,16 @@ export async function login(
   return res.json();
 }
 
-export async function requestPasswordResetOtp(
-  phone: string
-): Promise<{ success: boolean; error?: string }> {
-  const cleanPhone = phone.trim();
-  if (!cleanPhone || cleanPhone.length < 11) {
-    return { success: false, error: 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন' };
-  }
-  await new Promise((r) => setTimeout(r, 600));
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem(`otp_${cleanPhone}`, '1234');
-  }
-  return { success: true };
-}
-
-export async function verifyOtpAndResetPassword(
-  phone: string,
-  otp: string,
-  newPassword: string
-): Promise<{ success: boolean; error?: string }> {
-  if (!otp || otp.length < 4) {
-    return { success: false, error: 'সঠিক OTP কোড দিন' };
-  }
-  if (!newPassword || newPassword.length < 4) {
-    return { success: false, error: 'নতুন পাসওয়ার্ড কমপক্ষে ৪ অক্ষরের হতে হবে' };
-  }
-  await new Promise((r) => setTimeout(r, 600));
-  if (typeof window !== 'undefined') {
-    const storedOtp = sessionStorage.getItem(`otp_${phone.trim()}`);
-    if (storedOtp && otp !== storedOtp) {
-      return { success: false, error: 'OTP কোড সঠিক নয়। আবার চেষ্টা করুন।' };
-    }
-    sessionStorage.removeItem(`otp_${phone.trim()}`);
-  }
-  return { success: true };
-}
+/**
+ * Password reset is NOT implemented.
+ *
+ * The previous version stored '1234' in sessionStorage and returned success
+ * without changing any password anywhere, so a user who "reset" their PIN still
+ * had the old one and concluded that login was broken. A real implementation
+ * needs an SMS provider for the OTP plus a server route calling
+ * auth.admin.updateUserById. Until that exists the UI says so plainly.
+ */
+export const PASSWORD_RESET_AVAILABLE = false;
 
 export interface RegisterPayload {
   role: UserRole;
@@ -226,6 +210,8 @@ export interface CreateListingPayload {
   upazilaId: number;
   specificLocation?: string;
   imageUrls?: string[];
+  /** Defaults to 'supply' on the server when omitted. */
+  listingKind?: ListingKind;
 }
 
 export async function createListing(
